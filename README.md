@@ -17,7 +17,7 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 # The project is build on:
 
 | Package | Description   | ROS link  | Git Link 
-|---|---|---|---|---|
+|---|---|---|---|
 |Rosbrideg suite| For websocket server | http://wiki.ros.org/rosbridge_suite| https://github.com/RobotWebTools/rosbridge_suite.git
 | localization_dwm1001  | 4 Anchors 1 Tag   | http://wiki.ros.org/localizer_dwm1001 | https://github.com/20chix/dwm1001_ros.git | 
 | adafruit IMU | Reading 9DOF IMU | - |- https://github.com/rolling-robot/adafruit_imu |

@@ -5,10 +5,11 @@ import ROSLIB from "roslib";
 import Worldview, { Text, Lines, Cubes, Grid, Axes } from "regl-worldview";
 
 let anchor0pos = { id: "anchor0", x: 0, y: 0 };
-let anchor1pos = { id: "anchor1", x: 0, y: 0 };
-let anchor2pos = { id: "anchor2", x: 0, y: 0 };
-let anchor3pos = { id: "anchor3", x: 0, y: 0 };
-let tagpos = { x: 0, y: 0 };
+let anchor1pos = { id: "anchor1", x: 10, y: 0 };
+let anchor2pos = { id: "anchor2", x: 10, y: 10 };
+let anchor3pos = { id: "anchor3", x: 0, y: 10 };
+let tagpos = { x: 5, y: 5 };
+let tagOrientation = {x: 0, y: 0, z: 0, w: 0}
 
 function App() {
   const [count, setCount] = useState(0);
@@ -140,7 +141,7 @@ function App() {
         {[
           {
             pose: {
-              orientation: { x: 0, y: 0, z: 0, w: 1 },
+              orientation: { x: 0, y: 0, z: tagOrientation.z, w: tagOrientation.w },
               // position the cube at the center
               position: { x: tagpos.x, y: tagpos.y, z: 0 }
             },
@@ -150,7 +151,7 @@ function App() {
           }
         ]}
       </Cubes>
-      // Anchor 0
+
       <Cubes>
         {[
           {
@@ -272,12 +273,17 @@ function ConnectROSbridge() {
 
     var IMUlistener = new ROSLIB.Topic({
       ros: ros,
-      name: "/imu",
+      name: "/imu/data",
       messageType: "sensor_msgs/Imu"
     });
 
     IMUlistener.subscribe(function(message) {
-      console.log("IMU: " + message.angular_velocity.z);
+      console.log("IMU: " + message.orientation.x);
+      tagOrientation.x = message.orientation.x;
+      tagOrientation.y = message.orientation.y;
+      tagOrientation.z = message.orientation.z;
+      tagOrientation.w = message.orientation.w;
+
     });
 
     Anchor0Listener.subscribe(function(message) {

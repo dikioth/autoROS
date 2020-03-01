@@ -21,7 +21,7 @@ import rospy
 import time
 import serial
 import os
-
+import tf 
 
 # initialize the node
 rospy.init_node('Localizer_DWM1001', anonymous=False)
@@ -50,6 +50,9 @@ serialPortDWM1001 = serial.Serial(
 
 
 class dwm1001_localizer:
+
+    def __init__(self):
+        self.tag = Tag();
 
     def main(self):
         """
@@ -88,6 +91,13 @@ class dwm1001_localizer:
 
         try:
 
+
+            # Broadcasting transforms
+            self.timer = rospy.Timer(rospy.Duration(0.1), self.tf_callback)
+            self.br = tf.TransformBroadcaster()
+
+
+            # publishing topics
             while not rospy.is_shutdown():
                 # just read everything from serial port
                 serialReadLine = serialPortDWM1001.read_until()
@@ -116,6 +126,21 @@ class dwm1001_localizer:
                 rospy.loginfo("succesfully closed ")
                 serialPortDWM1001.close()
 
+
+    def tf_callback(self, timer):
+            self.br.sendTransform((self.tag.x, self.tag.y, self.tag.z),
+                        tf.transformations.quaternion_from_euler(0, 0, 0),
+                        rospy.Time.now(),
+                        "tag_frame",
+                        "world")
+
+                # for anchor in self.anchors.anchors:
+                #     self.br.sendTransform((anchor.x, anchor.y, anchor.z),
+                #         tf.transformations.quaternion_from_euler(0, 0, 0),
+                #         rospy.Time.now(),
+                #         anchor.header.frame_id,
+                #         "world")
+                        
     def splitByComma(self, dataFromUSB):
         """
         Split network data such us coordinates of anchor and tag, by comma ','
@@ -159,6 +184,10 @@ class dwm1001_localizer:
                                     networkDataArray[networkDataArray.index(network) + 4]),
                                 float(networkDataArray[networkDataArray.index(network) + 5]))
 
+                # timestamp and Anchor frame ID
+                anchor.header.stamp = rospy.Time.now()
+                anchor.header.frame_id = "anchor" + str(temp_anchor_number[-1]) + "_frame" #TODO: Change to real anchor name.
+
                 # publish each anchor, add anchor number to the topic, so we can pubblish multiple anchors
                 # example /dwm1001/anchor0, the last digit is taken from AN0 and so on
                 pub_anchor = rospy.Publisher(
@@ -176,10 +205,15 @@ class dwm1001_localizer:
             elif 'POS' in network:
 
                 # construct the object for the tag
-                tag = Tag(float(networkDataArray[networkDataArray.index(network) + 1]),
-                          float(
-                              networkDataArray[networkDataArray.index(network) + 2]),
-                          float(networkDataArray[networkDataArray.index(network) + 3]),)
+                self.tag.x = float(networkDataArray[networkDataArray.index(network) + 1])
+                self.tag.y = float(networkDataArray[networkDataArray.index(network) + 2])
+                self.tag.z = float(networkDataArray[networkDataArray.index(network) + 3])
+                
+            
+                # timestamp and Tag frame ID
+                tag.header.stamp = rospy.Time.now()
+                tag.header.frame_id = "tag_frame" #TODO: Change to real tag name.
+                #TODO: Read quality signal and number of anchors. 
 
                 # publish tag
                 pub_anchor = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
@@ -276,6 +310,10 @@ class dwm1001_localizer:
 
         return config
 
+    def tf_callback(self, timer):
+        ''' for transform broadcasting 
+            Author: Elvis R.
+        '''
 
 def start():
     dwm1001 = dwm1001_localizer()

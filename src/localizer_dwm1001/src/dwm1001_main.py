@@ -16,7 +16,6 @@ __maintainer__ = SYS_DEFS.MAINTAINER
 __email__ = SYS_DEFS.EMAIL
 __status__ = SYS_DEFS.STATUS
 
-pub_anchor
 import rospy
 import time
 import serial
@@ -99,7 +98,8 @@ class dwm1001_localizer:
 
             # publishing topics
             while not rospy.is_shutdown():
-                # just read everythiAnchorialPortDWM1001.read_until()
+                                # just read everything from serial port
+                serialReadLine = serialPortDWM1001.read_until()
 
                 try:
                     self.pubblishCoordinatesIntoTopics(
@@ -164,10 +164,9 @@ class dwm1001_localizer:
         :returns: none
 
         """
-
         # loop trough the array given by the serial port
         for network in networkDataArray:
-
+            
             # check if there is any entry starting with AN, which means there is an anchor
             if 'AN' in network:
                 # get the number after'AN' which we will use to pubblish topics, example /dwm1001/anchor1
@@ -179,6 +178,8 @@ class dwm1001_localizer:
                 anchor.z = float(networkDataArray[networkDataArray.index(network) + 4])
                 anchor.distanceFromTag = float(networkDataArray[networkDataArray.index(network) + 5])
 
+
+
                 # timestamp and Anchor frame ID
                 anchor.header.stamp = rospy.Time.now()
                 anchor.header.frame_id = "anchor" + str(temp_anchor_number[-1]) + "_frame" #TODO: Change to real anchor name.
@@ -188,14 +189,14 @@ class dwm1001_localizer:
                 pub_anchor = rospy.Publisher(
                     '/dwm1001/anchor'+str(temp_anchor_number[-1]), Anchor, queue_size=1)
                 pub_anchor.publish(anchor)
-                rospy.loginfo("Anchor: "
-                              + str(anchor.id)
-                              + " x: "
-                              + str(anchor.x)
-                              + " y: "
-                              + str(anchor.y)
-                              + " z: "
-                              + str(anchor.z))
+                # rospy.loginfo("Anchor: "
+                #               + str(anchor.header.frame_id)
+                #               + " x: "
+                #               + str(anchor.x)
+                #               + " y: "
+                #               + str(anchor.y)
+                #               + " z: "
+                #               + str(anchor.z))
 
             elif 'POS' in network:
 

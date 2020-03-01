@@ -1,7 +1,7 @@
 <launch>
     <group ns="/dwc4b8">
         <node pkg="ros_decawave" type="decawave_driver.py" name="decawave_driver" output="screen">
-            <param name="port" value="/dev/serial/by-id/usb-SEGGER_J-Link_000760038890-if00"/>
+            <param name="port" value="/dev/serial0"/>
             <param name="baudrate" value="115200"/>
             <param name="tf_publisher" value="True"/>
             <param name="tf_reference" value="world"/>

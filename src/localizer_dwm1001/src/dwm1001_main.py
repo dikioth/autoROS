@@ -16,7 +16,7 @@ __maintainer__ = SYS_DEFS.MAINTAINER
 __email__ = SYS_DEFS.EMAIL
 __status__ = SYS_DEFS.STATUS
 
-
+pub_anchor
 import rospy
 import time
 import serial
@@ -52,7 +52,7 @@ serialPortDWM1001 = serial.Serial(
 class dwm1001_localizer:
 
     def __init__(self):
-        self.tag = Tag();
+        self.tag = Tag()
 
     def main(self):
         """
@@ -99,8 +99,7 @@ class dwm1001_localizer:
 
             # publishing topics
             while not rospy.is_shutdown():
-                # just read everything from serial port
-                serialReadLine = serialPortDWM1001.read_until()
+                # just read everythiAnchorialPortDWM1001.read_until()
 
                 try:
                     self.pubblishCoordinatesIntoTopics(
@@ -172,17 +171,13 @@ class dwm1001_localizer:
             # check if there is any entry starting with AN, which means there is an anchor
             if 'AN' in network:
                 # get the number after'AN' which we will use to pubblish topics, example /dwm1001/anchor1
-                temp_anchor_number = networkDataArray[networkDataArray.index(
-                    network)]
+                anchor = Anchor()
+                temp_anchor_number = networkDataArray[networkDataArray.index(network)]
                 # construct the object for anchor(s)
-                anchor = Anchor(str(networkDataArray[networkDataArray.index(network) + 1]),
-                                float(
-                                    networkDataArray[networkDataArray.index(network) + 2]),
-                                float(
-                                    networkDataArray[networkDataArray.index(network) + 3]),
-                                float(
-                                    networkDataArray[networkDataArray.index(network) + 4]),
-                                float(networkDataArray[networkDataArray.index(network) + 5]))
+                anchor.x = float(networkDataArray[networkDataArray.index(network) + 2])
+                anchor.y = float(networkDataArray[networkDataArray.index(network) + 3])
+                anchor.z = float(networkDataArray[networkDataArray.index(network) + 4])
+                anchor.distanceFromTag = float(networkDataArray[networkDataArray.index(network) + 5])
 
                 # timestamp and Anchor frame ID
                 anchor.header.stamp = rospy.Time.now()
@@ -211,21 +206,21 @@ class dwm1001_localizer:
                 
             
                 # timestamp and Tag frame ID
-                tag.header.stamp = rospy.Time.now()
-                tag.header.frame_id = "tag_frame" #TODO: Change to real tag name.
+                self.tag.header.stamp = rospy.Time.now()
+                self.tag.header.frame_id = "tag_frame" #TODO: Change to real tag name.
                 #TODO: Read quality signal and number of anchors. 
 
                 # publish tag
                 pub_anchor = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
-                pub_anchor.publish(tag)
+                pub_anchor.publish(self.tag)
 
                 rospy.loginfo("Tag: "
                               + " x: "
-                              + str(tag.x)
+                              + str(self.tag.x)
                               + " y: "
-                              + str(tag.y)
+                              + str(self.tag.y)
                               + " z: "
-                              + str(tag.z))
+                              + str(self.tag.z))
 
     def updateDynamicConfiguration_SERIALPORT(self):
         """

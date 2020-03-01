@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   roscpp
   rospy
+  tf
   std_msgs
   message_generation
 )

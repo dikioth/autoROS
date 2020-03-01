@@ -29,9 +29,10 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 
 - Hyper: A multiplatform terminal that allows multiple frames. Specially usefull during ROS development.
 - samba
+- catkin_tools
 
 # Tips:
-
+- If you get ERROR: cannot launch node of type [<some-file>.py]: can't locate node [<some-file>.py] in package [<some-pkg>] you probably need to make the file executable by calling chmod +x name_of_file.py
 - If you want to connect the the ros server in the RPI from your computer you need to export/set the ROS_MASTER_URI in the terminal as following:
   - WINDOWS: `set ROS_MASTER_URI=http://<your-robot-address>:<your-robot-port>`
   - UBUNTU: `export ROS_MASTER_URI=http://<your-robot-address>:<your-robot-port>`

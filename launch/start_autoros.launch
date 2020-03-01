@@ -1,7 +1,7 @@
 <launch>
 
 <!-- Launching websocket -->
-<include file="${find rosbridge_server}/launch/rosbridge_websocket.launch" />
+<!-- <include file="${find rosbridge_server}/launch/rosbridge_websocket.launch" /> -->
 
 <!-- lauching DWM1001 node -->
 <include file="${find localization_dwm1001}/launch/dwm1001.launch" />

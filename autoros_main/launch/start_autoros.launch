@@ -1,0 +1,10 @@
+<launch>
+<include file="$(find localizer_dwm1001)/launch/dwm1001.launch"/>
+  <node pkg="localizer_dwm1001" name="dwm1001_tag_to_pose_converter" type="dwm1001_tag_to_pose_converter" />
+
+<!-- launching IMU with orientation -->
+<include file="$(find adafruit_imu)/launch/imu_node.launch" />
+  <node pkg="imu_filter_madgwick" name="imu_filter_node" type="imu_filter_node">
+    <param name =  "_use_magnetic_field_msg" value ="true"/>
+  </node>
+</launch>

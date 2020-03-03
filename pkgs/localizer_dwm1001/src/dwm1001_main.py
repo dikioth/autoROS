@@ -89,13 +89,6 @@ class dwm1001_localizer:
             rospy.loginfo("Can't open port: " + str(serialPortDWM1001.name))
 
         try:
-
-
-            # Broadcasting transforms
-            self.timer = rospy.Timer(rospy.Duration(0.1), self.tf_callback)
-            self.br = tf.TransformBroadcaster()
-
-
             # publishing topics
             while not rospy.is_shutdown():
                                 # just read everything from serial port
@@ -125,21 +118,6 @@ class dwm1001_localizer:
                 rospy.loginfo("succesfully closed ")
                 serialPortDWM1001.close()
 
-
-    def tf_callback(self, timer):
-            self.br.sendTransform((self.tag.x, self.tag.y, self.tag.z),
-                        tf.transformations.quaternion_from_euler(0, 0, 0),
-                        rospy.Time.now(),
-                        "tag_frame",
-                        "world")
-
-                # for anchor in self.anchors.anchors:
-                #     self.br.sendTransform((anchor.x, anchor.y, anchor.z),
-                #         tf.transformations.quaternion_from_euler(0, 0, 0),
-                #         rospy.Time.now(),
-                #         anchor.header.frame_id,
-                #         "world")
-                        
     def splitByComma(self, dataFromUSB):
         """
         Split network data such us coordinates of anchor and tag, by comma ','
@@ -190,14 +168,7 @@ class dwm1001_localizer:
                 pub_anchor = rospy.Publisher(
                     '/dwm1001/anchor'+str(temp_anchor_number[-1]), Anchor, queue_size=1)
                 pub_anchor.publish(anchor)
-                # rospy.loginfo("Anchor: "
-                #               + str(anchor.header.frame_id)
-                #               + " x: "
-                #               + str(anchor.x)
-                #               + " y: "
-                #               + str(anchor.y)
-                #               + " z: "
-                #               + str(anchor.z))
+
 
             elif 'POS' in network:
 
@@ -307,10 +278,6 @@ class dwm1001_localizer:
 
         return config
 
-    def tf_callback(self, timer):
-        ''' for transform broadcasting 
-            Author: Elvis R.
-        '''
 
 def start():
     dwm1001 = dwm1001_localizer()

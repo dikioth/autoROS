@@ -25,6 +25,10 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 | adafruit IMU         | Reading 9DOF IMU                 | -                                       | - https://github.com/rolling-robot/adafruit_imu      |
 | imu_filter_madgwick  | Orientation estimation using IMU | http://wiki.ros.org/imu_filter_madgwick | https://github.com/ccny-ros-pkg/imu_tools.git        |
 
+
+# Todo:
+- Create script in localization_dwm100 that simulates tag position using perlin noise. This is useful for simulating different filters without the dwm hardware.
+
 # Useful tools
 
 - Hyper: A multiplatform terminal that allows multiple frames. Specially usefull during ROS development.
@@ -34,6 +38,7 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 # Tips:
 - Work on ubuntu!
 - If you get ERROR: cannot launch node of type [<some-file>.py]: can't locate node [<some-file>.py] in package [<some-pkg>] you probably need to make the file executable by calling chmod +x name_of_file.py
+- if you get an '.cfg: Permission denied' error. You need to make the .cfg file executable by calling 'chmood +x name_of_file'
 - If you want to connect the the ros server in the RPI from your computer you need to export/set the ROS_MASTER_URI in the terminal as following:
   - WINDOWS: `set ROS_MASTER_URI=http://<your-robot-address>:<your-robot-port>`
   - UBUNTU: `export ROS_MASTER_URI=http://<your-robot-address>:<your-robot-port>`

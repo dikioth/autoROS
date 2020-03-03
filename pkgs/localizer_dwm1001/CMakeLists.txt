@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   roscpp
   rospy
-  tf
   std_msgs
   geometry_msgs
   message_generation
@@ -57,7 +56,7 @@ add_message_files(
    FILES
    Anchor.msg
    Tag.msg
-
+    AnchorArray.msg
  )
 
 ## Generate services in the 'srv' folder

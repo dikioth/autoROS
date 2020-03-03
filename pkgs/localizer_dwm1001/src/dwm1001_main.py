@@ -5,6 +5,7 @@
 from localizer_dwm1001.srv import Anchor_0
 from localizer_dwm1001.msg import Tag
 from localizer_dwm1001.msg import Anchor
+from localizer_dwm1001.msg import AnchorArray
 from localizer_dwm1001.cfg import DWM1001_Tune_SerialConfig
 from dynamic_reconfigure.server import Server
 from dwm1001_apiCommands import DWM1001_API_COMMANDS
@@ -20,7 +21,7 @@ import rospy
 import time
 import serial
 import os
-import tf 
+import tf
 
 # initialize the node
 rospy.init_node('Localizer_DWM1001', anonymous=False)
@@ -29,7 +30,7 @@ rospy.init_node('Localizer_DWM1001', anonymous=False)
 os.popen("sudo chmod 777 /dev/serial0", "w")
 
 # initialize ros rate 10hz
-rate = rospy.Rate(1)
+rate = rospy.Rate(10)
 
 serialReadLine = ""
 # For dynamic configuration
@@ -50,8 +51,14 @@ serialPortDWM1001 = serial.Serial(
 
 class dwm1001_localizer:
 
-    def __init__(self):
-        self.tag = Tag()
+    def __init__(self): > format
+    self.tf_reference = 'world'
+    self.tag = Tag()
+    self.anchors = AnchorArray()
+    self.anchors.anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
+    self.pub_tag = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
+    self.pub_anchors = rospy.Publisher(
+        '/dwm1001/anchors', AnchorArray, queue_size=1)
 
     def main(self):
         """
@@ -67,6 +74,7 @@ class dwm1001_localizer:
 
         # TODO implemnt functionality dynamic configuration
         # updateDynamicConfiguration_SERIALPORT()
+
         # close the serial port in case the previous run didn't closed it properly
         serialPortDWM1001.close()
         # sleep for one sec
@@ -89,9 +97,11 @@ class dwm1001_localizer:
             rospy.loginfo("Can't open port: " + str(serialPortDWM1001.name))
 
         try:
+            # Creating pusblishers
+
             # publishing topics
             while not rospy.is_shutdown():
-                                # just read everything from serial port
+                # just read everything from serial port
                 serialReadLine = serialPortDWM1001.read_until()
 
                 try:
@@ -144,48 +154,55 @@ class dwm1001_localizer:
         """
         # loop trough the array given by the serial port
         for network in networkDataArray:
-            
+
             # check if there is any entry starting with AN, which means there is an anchor
             if 'AN' in network:
                 # get the number after'AN' which we will use to pubblish topics, example /dwm1001/anchor1
                 anchor = Anchor()
-                temp_anchor_number = networkDataArray[networkDataArray.index(network)]
-                temp_anchor_id = str(networkDataArray[networkDataArray.index(network) + 1])
+                temp_anchor_number = networkDataArray[networkDataArray.index(
+                    network)]
+                temp_anchor_id = str(
+                    networkDataArray[networkDataArray.index(network) + 1])
                 # construct the object for anchor(s)
-                anchor.x = float(networkDataArray[networkDataArray.index(network) + 2])
-                anchor.y = float(networkDataArray[networkDataArray.index(network) + 3])
-                anchor.z = float(networkDataArray[networkDataArray.index(network) + 4])
-                anchor.distanceFromTag = float(networkDataArray[networkDataArray.index(network) + 5])
-
-
+                anchor.x = float(
+                    networkDataArray[networkDataArray.index(network) + 2])
+                anchor.y = float(
+                    networkDataArray[networkDataArray.index(network) + 3])
+                anchor.z = float(
+                    networkDataArray[networkDataArray.index(network) + 4])
+                anchor.distanceFromTag = float(
+                    networkDataArray[networkDataArray.index(network) + 5])
 
                 # timestamp and Anchor frame ID
                 anchor.header.stamp = rospy.Time.now()
-                anchor.header.frame_id = "anchor" + temp_anchor_id + "_frame" #TODO: Change to real anchor name.
+                # TODO: Change to real anchor name.
+                anchor.header.frame_id = "anchor" + temp_anchor_id + "_frame"
 
                 # publish each anchor, add anchor number to the topic, so we can pubblish multiple anchors
                 # example /dwm1001/anchor0, the last digit is taken from AN0 and so on
-                pub_anchor = rospy.Publisher(
-                    '/dwm1001/anchor'+str(temp_anchor_number[-1]), Anchor, queue_size=1)
-                pub_anchor.publish(anchor)
 
+                # Appending to array
+                self.anchors.anchors[temp_anchor_id] = anchor
+                pub_anchor.publish(self.anchors)
 
             elif 'POS' in network:
 
                 # construct the object for the tag
-                self.tag.x = float(networkDataArray[networkDataArray.index(network) + 1])
-                self.tag.y = float(networkDataArray[networkDataArray.index(network) + 2])
-                self.tag.z = float(networkDataArray[networkDataArray.index(network) + 3])
-                
-            
+                self.tag.x = float(
+                    networkDataArray[networkDataArray.index(network) + 1])
+                self.tag.y = float(
+                    networkDataArray[networkDataArray.index(network) + 2])
+                self.tag.z = float(
+                    networkDataArray[networkDataArray.index(network) + 3])
+
                 # timestamp and Tag frame ID
                 self.tag.header.stamp = rospy.Time.now()
-                self.tag.header.frame_id = "tag_frame" #TODO: Change to real tag name.
-                #TODO: Read quality signal and number of anchors. 
+                # TODO: Change to real tag name.
+                self.tag.header.frame_id = "tag_frame"
+                # TODO: Read quality signal and number of anchors.
 
                 # publish tag
-                pub_anchor = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
-                pub_anchor.publish(self.tag)
+                self.pub_tag.publish(self.tag)
 
                 rospy.loginfo("Tag: "
                               + " x: "

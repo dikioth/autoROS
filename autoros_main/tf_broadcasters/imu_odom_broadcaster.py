@@ -1,12 +1,11 @@
 #!/usr/bin/env python  
-#import roslib
-#roslib.load_manifest('learning_tf')
 
 ''' 
 This packages subscribe to Tag & Anchorarrays and broadcasts the transformations.
 '''
 
 import rospy
+import tf
 from localizer_dwm1001.msg import Tag
 from localizer_dwm1001.msg import AnchorArray
 

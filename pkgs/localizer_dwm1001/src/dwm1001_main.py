@@ -51,13 +51,13 @@ serialPortDWM1001 = serial.Serial(
 
 class dwm1001_localizer:
 
-    def __init__(self): > format
-    self.tf_reference = 'world'
-    self.tag = Tag()
-    self.anchors = AnchorArray()
-    self.anchors.anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
-    self.pub_tag = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
-    self.pub_anchors = rospy.Publisher(
+    def __init__(self): 
+        self.tf_reference = "world"
+        self.tag = Tag()
+        self.anchors = AnchorArray()
+        self.anchors.anchors = [Anchor(), Anchor(), Anchor(), Anchor()]
+        self.pub_tag = rospy.Publisher('/dwm1001/tag', Tag, queue_size=1)
+        self.pub_anchors = rospy.Publisher(
         '/dwm1001/anchors', AnchorArray, queue_size=1)
 
     def main(self):
@@ -159,10 +159,8 @@ class dwm1001_localizer:
             if 'AN' in network:
                 # get the number after'AN' which we will use to pubblish topics, example /dwm1001/anchor1
                 anchor = Anchor()
-                temp_anchor_number = networkDataArray[networkDataArray.index(
-                    network)]
-                temp_anchor_id = str(
-                    networkDataArray[networkDataArray.index(network) + 1])
+                temp_anchor_number = networkDataArray[networkDataArray.index(network)]
+                temp_anchor_id =  str(networkDataArray[networkDataArray.index(network) + 1])
                 # construct the object for anchor(s)
                 anchor.x = float(
                     networkDataArray[networkDataArray.index(network) + 2])
@@ -182,8 +180,8 @@ class dwm1001_localizer:
                 # example /dwm1001/anchor0, the last digit is taken from AN0 and so on
 
                 # Appending to array
-                self.anchors.anchors[temp_anchor_id] = anchor
-                pub_anchor.publish(self.anchors)
+                self.anchors.anchors[int(temp_anchor_number[-1])] = anchor
+                self.pub_anchors.publish(self.anchors)
 
             elif 'POS' in network:
 

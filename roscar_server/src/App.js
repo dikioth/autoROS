@@ -4,10 +4,12 @@ import React, { useState } from "react";
 import ROSLIB from "roslib";
 import Worldview, { Text, Lines, Cubes, Grid, Axes } from "regl-worldview";
 
+let anchorsArr = []
+
 let anchor0pos = { id: "anchor0", x: 0, y: 0 };
-let anchor1pos = { id: "anchor1", x: 10, y: 0 };
-let anchor2pos = { id: "anchor2", x: 10, y: 10 };
-let anchor3pos = { id: "anchor3", x: 0, y: 10 };
+let anchor1pos = { id: "anchor1", x: 50, y: 0 };
+let anchor2pos = { id: "anchor2", x: 50, y: 50 };
+let anchor3pos = { id: "anchor3", x: 0, y: 50 };
 let tagpos = { x: 5, y: 5 };
 let tagOrientation = {x: 0, y: 0, z: 0, w: 0}
 
@@ -244,76 +246,58 @@ function ConnectROSbridge() {
   ros.on("connection", function() {
     console.log("Connected to websocket server.");
 
+
+
     // create a listener
-    var Anchor0Listener = new ROSLIB.Topic({
+    var AnchorsListener = new ROSLIB.Topic({
       ros: ros,
-      name: "/dwm1001/anchor0",
-      messageType: "localizer_dwm1001/Anchor"
+      name: "/dwm1001/anchors",
+      messageType: "localizer_dwm1001/AnchorArray"
     });
-    var Anchor1Listener = new ROSLIB.Topic({
-      ros: ros,
-      name: "/dwm1001/anchor1",
-      messageType: "localizer_dwm1001/Anchor"
-    });
-    var Anchor2Listener = new ROSLIB.Topic({
-      ros: ros,
-      name: "/dwm1001/anchor2",
-      messageType: "localizer_dwm1001/Anchor"
-    });
-    var Anchor3Listener = new ROSLIB.Topic({
-      ros: ros,
-      name: "/dwm1001/anchor3",
-      messageType: "localizer_dwm1001/Anchor"
-    });
+    
+  
     var tagListener = new ROSLIB.Topic({
       ros: ros,
-      name: "/dwm1001/tag",
-      messageType: "localizer_dwm1001/Tag"
+      name: "/dwm1001/tagPose",
+      messageType: "geometry_msgs/PoseWithCovarianceStamped"
     });
 
-    var IMUlistener = new ROSLIB.Topic({
-      ros: ros,
-      name: "/imu/data",
-      messageType: "sensor_msgs/Imu"
-    });
+    // var IMUlistener = new ROSLIB.Topic({
+    //   ros: ros,
+    //   name: "/imu/data",
+    //   messageType: "sensor_msgs/Imu"
+    // });
 
-    IMUlistener.subscribe(function(message) {
-      console.log("IMU: " + message.orientation.x);
-      tagOrientation.x = message.orientation.x;
-      tagOrientation.y = message.orientation.y;
-      tagOrientation.z = message.orientation.z;
-      tagOrientation.w = message.orientation.w;
+    // IMUlistener.subscribe(function(message) {
+    //   console.log("IMU: " + message.orientation.x);
+    //   tagOrientation.x = message.orientation.x;
+    //   tagOrientation.y = message.orientation.y;
+    //   tagOrientation.z = message.orientation.z;
+    //   tagOrientation.w = message.orientation.w;
 
-    });
+    // });
 
-    Anchor0Listener.subscribe(function(message) {
-      anchor0pos.x = 10 * message.x;
-      anchor0pos.y = 10 * message.y;
+    AnchorsListener.subscribe(function(message) {
+      anchorsArr = []
+      message.anchors.forEach(function(anchor){
+        anchorsArr.push(anchor)
+      });
       // listener.unsubscribe();
     });
 
-    Anchor1Listener.subscribe(function(message) {
-      anchor1pos.x = 10 * message.x;
-      anchor1pos.y = 10 * message.y;
-      // listener.unsubscribe();
-    });
 
-    Anchor2Listener.subscribe(function(message) {
-      anchor2pos.x = 10 * message.x;
-      anchor2pos.y = 10 * message.y;
-      // listener.unsubscribe();
-    });
-
-    Anchor3Listener.subscribe(function(message) {
-      anchor3pos.x = 10 * message.x;
-      anchor3pos.y = 10 * message.y;
-      // listener.unsubscribe();
-    });
 
     // subscribe to Tag topic
     tagListener.subscribe(function(message) {
-      tagpos.x = 10 * message.x;
-      tagpos.y = 10 * message.y;
+      tagpos.x = 10 * message.pose.pose.position.x; 
+      tagpos.y = 10 * message.pose.pose.position.y;
+      
+      tagOrientation.x = message.pose.pose.orientation.x;
+      tagOrientation.y = message.pose.pose.orientation.y;
+      tagOrientation.z = message.pose.pose.orientation.z;
+      tagOrientation.w = message.pose.pose.orientation.w;
+
+      
       // console.log(
       //   "Received message on " +
       //     tagListener.name +

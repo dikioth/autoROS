@@ -28,12 +28,16 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 
 # Todo:
 - Create script in localization_dwm100 that simulates tag position using perlin noise. This is useful for simulating different filters without the dwm hardware.
+- Although I din't experience much problem with the RPI3b+ it would be good to migrate to RPI4 and check it's efficiency.
 
 # Useful tools
 
 - Hyper: A multiplatform terminal that allows multiple frames. Specially usefull during ROS development.
 - samba
 - catkin_tools
+
+# Useful commands:
+- rospack list-names
 
 # Tips:
 - Work on ubuntu!

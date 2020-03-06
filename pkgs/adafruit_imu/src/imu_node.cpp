@@ -156,7 +156,7 @@ int main(int argc, char **argv)
       Read_Accel();
 
       imu_msg.header.stamp = ros::Time::now();
-      imu_msg.header.frame_id = "tag_frame";
+      imu_msg.header.frame_id = "world";
       imu_msg.linear_acceleration.x = ToSi(accel_x); //(float)accel_x / GRAVITY * FREE_ACC;
       imu_msg.linear_acceleration.y = ToSi(accel_y); //(float)accel_y / GRAVITY * FREE_ACC;
       imu_msg.linear_acceleration.z = ToSi(accel_z); //(float)accel_z / GRAVITY * FREE_ACC;

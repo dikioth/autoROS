@@ -31,7 +31,7 @@
 ImuFilterRos::ImuFilterRos(ros::NodeHandle nh, ros::NodeHandle nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  initialized_(false)
+  initialized_(false)broadcast
 {
   ROS_INFO ("Starting ImuFilter");
 
@@ -41,7 +41,7 @@ ImuFilterRos::ImuFilterRos(ros::NodeHandle nh, ros::NodeHandle nh_private):
   if (!nh_private_.getParam ("use_mag", use_mag_))
    use_mag_ = true;
   if (!nh_private_.getParam ("publish_tf", publish_tf_))
-   publish_tf_ = true;
+   publish_tf_ = false;
   if (!nh_private_.getParam ("reverse_tf", reverse_tf_))
    reverse_tf_ = false;
   if (!nh_private_.getParam ("fixed_frame", fixed_frame_))
@@ -102,10 +102,7 @@ ImuFilterRos::ImuFilterRos(ros::NodeHandle nh, ros::NodeHandle nh_private):
   // **** register dynamic reconfigure
   config_server_.reset(new FilterConfigServer(nh_private_));
   FilterConfigServer::CallbackType f = boost::bind(&ImuFilterRos::reconfigCallback, this, _1, _2);
-  config_server_->setCallback(f);
-
-  // **** register publishers
-  imu_publisher_ = nh_.advertise<sensor_msgs::Imu>(
+  config_server_->setbroadcast_.advertise<sensor_msgs::Imu>(
     ros::names::resolve("imu") + "/data", 5);
 
   if (publish_debug_topics_)

@@ -10,7 +10,7 @@ frequency: 30
 two_d_mode: true
 
 # Whether to broadcast the transformation over the /tf topic. Defaults to true if unspecified.
-publish_tf: false
+publish_tf: true
 
 # Whether to publish the acceleration state. Defaults to false if unspecified.
 publish_acceleration: false
@@ -28,23 +28,23 @@ world_frame: world           # Defaults to the value of odom_frame if unspecifie
 
 
 odom0: /dwm1001/tag_odom
-odom0_config: [false,  true,  false,
+odom0_config: [true,  true,  true,
+               false, false, true,
                false, false, false,
-               false, false, false,
-               false, false, false,
+               false, false, true,
                false, false, false]
-odom0_differential: true
+odom0_differential: false
 
 imu0: imu/data
 imu0_config: [false, false, false, # x, y, z,
-              false,  false,  true,  # roll, pitch, yaw,
+              false, false,  true,  # roll, pitch, yaw,
               false, false, false, # vx, vy, vz,
               false,  false,  true,  # vroll, vpitch, vyaw,
-              false,  true,  false]  #  ax, ay, az
+              true,  true,  false]  #  ax, ay, az
               
-imu0_differential: true
+imu0_differential: false
 
-# imu0_remove_gravitational_acceleration: false
+imu0_remove_gravitational_acceleration: true
 
 
 # [ADVANCED] The process noise covariance matrix can be difficult to tune, and can vary for each application, so it is

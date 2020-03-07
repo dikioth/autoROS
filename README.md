@@ -24,7 +24,7 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 | localization_dwm1001 | 4 Anchors 1 Tag                  | http://wiki.ros.org/localizer_dwm1001   | https://github.com/20chix/dwm1001_ros.git            |
 | adafruit IMU         | Reading 9DOF IMU                 | -                                       | - https://github.com/rolling-robot/adafruit_imu      |
 | imu_filter_madgwick  | Orientation estimation using IMU | http://wiki.ros.org/imu_filter_madgwick | https://github.com/ccny-ros-pkg/imu_tools.git        |
-
+| teleop_twist_keyboard| Controll robot w/ keyboard       | http://wiki.ros.org/teleop_twist_keyboard| https://github.com/ros-teleop/teleop_twist_keyboard |
 
 # Todo:
 - Create script in localization_dwm100 that simulates tag position using perlin noise. This is useful for simulating different filters without the dwm hardware.
@@ -49,3 +49,10 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 
 - Samba user must match the rpi user. In this case the user is 'ubuntu'.
 - source in bashrc 
+
+
+# Interesting sources to explore:
+- https://ardupilot.org/rover/index.html
+- https://www.ubiquityrobotics.com/
+- https://www.donkeycar.com/
+

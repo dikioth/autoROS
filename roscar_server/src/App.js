@@ -2,7 +2,7 @@ import { useAnimationFrame } from "@cruise-automation/hooks";
 
 import React, { useState } from "react";
 import ROSLIB from "roslib";
-import Worldview, { Text, Lines, Cubes, Grid, Axes } from "regl-worldview";
+import Worldview, { Arrows, Text, Lines, Cubes, Grid, Axes } from "regl-worldview";
 
 let anchorsArr = []
 
@@ -133,6 +133,25 @@ function App() {
     }
   ];
 
+  const poseArrow1 = {
+    pose: {
+      orientation: { x:tagOrientation.x, y:tagOrientation.y, z: tagOrientation.z, w: tagOrientation.w },
+      position: { x:tagpos.x, y:tagpos.y, z: 0 },
+    },
+    scale: { x: 10, y: 0.5, z: 0.5 },
+    color: { r: 1, g: 0, b: 1, a: 1 },
+  };
+
+  const poseArrow2 = {
+    pose: {
+      orientation: { x:tagOrientation.y, y:tagOrientation.x, z: tagOrientation.z, w: tagOrientation.w },
+      position: { x:tagpos.x, y:tagpos.y, z: 0 },
+    },
+    scale: { x: 10, y: 0.5, z: 0.5 },
+    color: { r: 0, g: 1, b: 1, a: 1 },
+  };
+
+
   return (
     <Worldview>
       <Grid count={100} />
@@ -210,6 +229,7 @@ function App() {
           }
         ]}
       </Cubes>
+      <Arrows>{[poseArrow1]}</Arrows>
       <div
         style={{
           position: "absolute",
@@ -262,20 +282,6 @@ function ConnectROSbridge() {
       messageType: "geometry_msgs/PoseWithCovarianceStamped"
     });
 
-    // var IMUlistener = new ROSLIB.Topic({
-    //   ros: ros,
-    //   name: "/imu/data",
-    //   messageType: "sensor_msgs/Imu"
-    // });
-
-    // IMUlistener.subscribe(function(message) {
-    //   console.log("IMU: " + message.orientation.x);
-    //   tagOrientation.x = message.orientation.x;
-    //   tagOrientation.y = message.orientation.y;
-    //   tagOrientation.z = message.orientation.z;
-    //   tagOrientation.w = message.orientation.w;
-
-    // });
 
     AnchorsListener.subscribe(function(message) {
       anchorsArr = []
@@ -289,8 +295,8 @@ function ConnectROSbridge() {
 
     // subscribe to Tag topic
     tagListener.subscribe(function(message) {
-      tagpos.x = 10 * message.pose.pose.position.x; 
-      tagpos.y = 10 * message.pose.pose.position.y;
+      tagpos.x = 1 * message.pose.pose.position.x; 
+      tagpos.y = 1 * message.pose.pose.position.y;
       
       tagOrientation.x = message.pose.pose.orientation.x;
       tagOrientation.y = message.pose.pose.orientation.y;

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from analysis.data_logger import DataLogger
+# from analysis.data_logger import DataLogger
 from application.context import ControlSignal, Context
 from kalman.PositionEstimator import PositionEstimator
 from websocket_server.websocket_server import ToWeb
@@ -12,7 +12,7 @@ async def kalman_man(context: Context):
     try:
         # Initalize Kalman Filter
         logging.getLogger('asyncio').info("Initializing.")
-        await context.new_measurement_event.wait()
+        context.new_measurement_event.wait()
         measurement = context.measurement
         loc_data, imu_data = measurement.result_tag, measurement.result_imu
         context.new_measurement_event.clear()
@@ -26,7 +26,7 @@ async def kalman_man(context: Context):
             try:
                 logging.getLogger('asyncio').info(
                     "Waiting for new measurements.")
-                await context.new_measurement_event.wait()
+                context.new_measurement_event.wait()
                 measurement = context.measurement
                 loc_data, imu_data = measurement.result_tag, measurement.result_imu
                 context.new_measurement_event.clear()
@@ -37,7 +37,7 @@ async def kalman_man(context: Context):
             if context.auto_steering:
                 logging.getLogger('asyncio').info(
                     "Waiting for control signal.")
-                await context.new_control_signal_event.wait()
+                context.new_control_signal_event.wait()
                 if context.auto_steering:
                     control_signal = context.control_signal
                     context.new_control_signal_event.clear()

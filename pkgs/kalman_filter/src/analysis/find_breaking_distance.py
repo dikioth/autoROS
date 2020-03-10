@@ -18,7 +18,8 @@ def create_plots(dataframe, timestamp, brake_time_stamp):
     fig, ax = plt.subplots(1, 1)
 
     # Line plot
-    dataframe.reset_index().plot(ax=ax, x='index', y=['x', 'y', 'target_x', 'target_y', 'x_kf', 'y_kf'])
+    dataframe.reset_index().plot(ax=ax, x='index', y=[
+        'x', 'y', 'target_x', 'target_y', 'x_kf', 'y_kf'])
     plt.axvline(brake_time_stamp)
 
     plt.savefig(f"{timestamp}_line_plot.png")
@@ -35,22 +36,25 @@ async def start_and_brake(reverse=True):
         'angle': -9.5,
         'speed': 0.2
     }
-    location_task = asyncio.create_task(serial_task(log_queue, serial_queue))  # use real serial
+    location_task = asyncio.create_task(serial_task(
+        log_queue, serial_queue))  # use real serial
 
-    await message_queue.put(go_forward_message)
-    motor_task = asyncio.create_task(motor_control_task(message_queue, serial_queue))
+    message_queue.put(go_forward_message)
+    motor_task = asyncio.create_task(
+        motor_control_task(message_queue, serial_queue))
     timestamp = generate_timestamp(pd)
-    logging_task = asyncio.create_task(log_task(log_queue, file_timestamp=timestamp, asyncio=asyncio, pd=pd))
-    await asyncio.sleep(7)
+    logging_task = asyncio.create_task(
+        log_task(log_queue, file_timestamp=timestamp, asyncio=asyncio, pd=pd))
+    asyncio.sleep(7)
 
     go_forward_message = {
         'type': 'brake',
     }
 
-    await message_queue.put(go_forward_message)
+    message_queue.put(go_forward_message)
     brake_time_stamp = pd.Timestamp.utcnow()
 
-    await asyncio.sleep(6)
+    asyncio.sleep(6)
 
     message2 = {
         'type': 'car_control',
@@ -58,16 +62,16 @@ async def start_and_brake(reverse=True):
         'speed': -0.2
     }
     if reverse:
-        await message_queue.put(message2)
-        await asyncio.sleep(2)
-        await message_queue.put(go_forward_message)
+        message_queue.put(message2)
+        asyncio.sleep(2)
+        message_queue.put(go_forward_message)
 
     location_task.cancel()
 
     motor_task.cancel()
     logging_task.cancel()
 
-    result: pd.DataFrame = await logging_task
+    result: pd.DataFrame = logging_task
 
     timestamp = generate_timestamp()
     result.to_csv(f'{timestamp}.csv')
@@ -88,10 +92,12 @@ async def start_and_stop_and_start():
         'angle': -9.5,
         'speed': 0.2
     }
-    location_task = asyncio.create_task(serial_task(log_queue, serial_queue))  # use real serial
+    location_task = asyncio.create_task(serial_task(
+        log_queue, serial_queue))  # use real serial
 
     await message_queue.put(brake_message)
-    motor_task = asyncio.create_task(motor_control_task(message_queue, serial_queue))
+    motor_task = asyncio.create_task(
+        motor_control_task(message_queue, serial_queue))
     logging_task = asyncio.create_task(log_task(log_queue))
     await asyncio.sleep(sleep_time)
 
@@ -148,7 +154,8 @@ async def log_task(location_queue, file_timestamp, asyncio, pd, target_y=2.5, ta
 
             time_stamp = pd.Timestamp.utcnow()
             # time_stamp = generate_timestamp(pd)
-            location_df = location_df.append(pd.DataFrame(locations, index=[time_stamp]))
+            location_df = location_df.append(
+                pd.DataFrame(locations, index=[time_stamp]))
 
     except asyncio.CancelledError:
         print("Logging cancelled")
@@ -159,7 +166,8 @@ async def fake_serial_task(data_file, asyncio, *queues):
     with open(data_file, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            location_data = LocationData(float(row['x']), float(row['y']), float(row['z']), float(row['quality']))
+            location_data = LocationData(float(row['x']), float(
+                row['y']), float(row['z']), float(row['quality']))
             tasks = [q.put(location_data) for q in queues]
             await asyncio.gather(*tasks)
 

@@ -24,13 +24,13 @@ def connect_to_arduino():
 
 
 async def main(connection):
-    success = await imu.start_IMU(connection)
+    success = imu.start_IMU(connection)
 
     while 1:
         loop = asyncio.get_running_loop()
         read_imu = functools.partial(imu.read_IMU, connection=connection)
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            result: imu.IMUData = await loop.run_in_executor(pool, read_imu)
+            result: imu.IMUData = loop.run_in_executor(pool, read_imu)
         print(f"ypr: {result.rotation}")
         print(f"real_accel: {result.real_acceleration}")
         print(f"worl_accel: {result.world_acceleration}")

@@ -124,6 +124,6 @@ class Context:
         else:
             self.settings = load_settings(settings_file)
 
-    async def get_estimated_state(self):
-        await self.new_estimated_state_event.wait()
+    def get_estimated_state(self):
+        self.new_estimated_state_event.wait()
         return self.estimated_state

@@ -1,0 +1,21 @@
+{
+  "generate_movie": false,
+  "kalman": {
+    "update_delay": 0.1,
+    "process_dev_pos": 0,
+    "process_dev_acc": 0.08,
+    "process_dev_heading": 0.0,
+    "process_dev_heading_acc": 0.08,
+    "process_dev_vel": 0.1,
+    "meas_dev_pos": 0.1,
+    "meas_dev_heading": 0.08,
+    "meas_dev_acc": 1.2,
+    "speed_div_by_length": 0.9,
+    "variable_dt": true,
+    "uwb_only_kf": false
+  },
+  "path": {
+    "x": [1.1, 2.5, 2.5, 1.4, 1.4, 1.8],
+    "y": [2.0, 2.0, 5.0, 5.0, 2.0, 2.0]
+}
+}

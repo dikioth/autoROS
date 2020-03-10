@@ -2,9 +2,9 @@
 Ongoing project. ETA: 16 March.
 </aside>
 
-# ROScar
+# autoROS
 
-UU project for autonomous robot using EKF for positioning and PID for controlling.
+UU project for autonomous robot using EKF for positioning and PID for controlling. The car can be controlled trought a web App built on React.
 
 # Components are:
 
@@ -14,16 +14,16 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
   - L3GD20H 3-axis gyroscope: ±250, ±500, or ±2000 degree-per-second scale
   - LSM303 3-axis compass: ±1.3 to ±8.1 gauss magnetic field scale
   - LSM303 3-axis accelerometer: ±2g/±4g/±8g/±16g selectable scale
-- Raspberry Pi model 3B
+- Raspberry Pi model 3B+
 
-# The project is build on:
+# The project is build on the followinf ROS pkg:
 
-| Package              | Description                      | ROS link                                | Git Link                                             |
-| -------------------- | -------------------------------- | --------------------------------------- | ---------------------------------------------------- |
-| Rosbrideg suite      | For websocket server             | http://wiki.ros.org/rosbridge_suite     | https://github.com/RobotWebTools/rosbridge_suite.git |
-| localization_dwm1001 | 4 Anchors 1 Tag                  | http://wiki.ros.org/localizer_dwm1001   | https://github.com/20chix/dwm1001_ros.git            |
-| adafruit IMU         | Reading 9DOF IMU                 | -                                       | - https://github.com/rolling-robot/adafruit_imu      |
-| imu_filter_madgwick  | Orientation estimation using IMU | http://wiki.ros.org/imu_filter_madgwick | https://github.com/ccny-ros-pkg/imu_tools.git        |
+| Package              | Description                      | ROS link                                 | Git Link                                             |
+| -------------------- | -------------------------------- | ---------------------------------------  | ---------------------------------------------------- |
+| Rosbrideg suite      | For websocket server             | http://wiki.ros.org/rosbridge_suite      | https://github.com/RobotWebTools/rosbridge_suite.git |
+| localization_dwm1001 | 4 Anchors 1 Tag                  | http://wiki.ros.org/localizer_dwm1001    | https://github.com/20chix/dwm1001_ros.git            |
+| adafruit IMU         | Reading 9DOF IMU                 | -                                        | - https://github.com/rolling-robot/adafruit_imu      |
+| imu_filter_madgwick  | Orientation estimation using IMU | http://wiki.ros.org/imu_filter_madgwick  | https://github.com/ccny-ros-pkg/imu_tools.git        |
 | teleop_twist_keyboard| Controll robot w/ keyboard       | http://wiki.ros.org/teleop_twist_keyboard| https://github.com/ros-teleop/teleop_twist_keyboard |
 
 # Todo:
@@ -34,10 +34,7 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
 
 - Hyper: A multiplatform terminal that allows multiple frames. Specially usefull during ROS development.
 - samba
-- catkin_tools
-
-# Useful commands:
-- rospack list-names
+- catkin_tools:
 
 # Tips:
 - Work on ubuntu!
@@ -48,11 +45,14 @@ UU project for autonomous robot using EKF for positioning and PID for controllin
   - UBUNTU: `export ROS_MASTER_URI=http://<your-robot-address>:<your-robot-port>`
 
 - Samba user must match the rpi user. In this case the user is 'ubuntu'.
-- source in bashrc 
+- source in ~/.bashrc 
 
 
 # Interesting sources to explore:
 - https://ardupilot.org/rover/index.html
 - https://www.ubiquityrobotics.com/
 - https://www.donkeycar.com/
+- http://robotwebtools.org/
+- https://xiangzhuo-ding.github.io/ROS_Projects.html
+
 

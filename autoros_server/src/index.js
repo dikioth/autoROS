@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom";
 import React, { useState } from "react";
 import App from "./App";
-import ROSLIB from "roslib";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Connecting to server
 

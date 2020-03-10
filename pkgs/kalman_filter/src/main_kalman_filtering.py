@@ -48,10 +48,8 @@ class Estimator:
         self.imu_data = IMUData(
             rotation=rotation, real_acceleration=real_acc, world_acceleration=world_acc)
 
-    def set_steering(self, u_yaw){
+    def set_steering(self, u_yaw):
         self.tan_u = np.tan(u_yaw)
-
-    }
 
     def loop(self):
 
@@ -60,7 +58,6 @@ class Estimator:
         if self.start:
             position_estimator.start_kalman_filter(loc_data)
             self.start = False
-            continue
 
         estimated_state = position_estimator.do_kalman_updates(
             self.loc_data, self.imu_data, control_signal=control_signal.to_numpy())
@@ -69,6 +66,7 @@ class Estimator:
 
 
 if __name__ == "__main__":
+    rospy.loginfo("Starting ...")
     e = Estimator()
     e.main()
     try:

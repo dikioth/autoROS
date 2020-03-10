@@ -10,7 +10,7 @@
 
   <url type="website">http://wiki.ros.org/autoros_teleop</url>
 
-  <author>Elvis Rodas/author>
+  <author>Elvis Rodas</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>geometry_msgs</run_depend>

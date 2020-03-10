@@ -1,3 +1,8 @@
+from dataclasses import dataclass
+from asyncio.locks import Event
+from asyncio.queues import Queue
+
+
 @dataclass
 class Transform:
     x: float
@@ -31,6 +36,26 @@ class LocationData:
 
 
 @dataclass
+class Measurement:
+    result_tag: LocationData
+    result_imu: IMUData
+
+
+@dataclass
+class EstimatedState:
+    location_est: LocationData
+    x_v_est: float
+    y_v_est: float
+    log_likelihood: float
+    likelihood: float
+    x_acc_est: float
+    y_acc_est: float
+    yaw_est: float
+    yaw_acc_est: float
+    measurement: Measurement = None  # has result_tag, result_imu
+
+
+@dataclass
 class Anchor:
     anchor_id: str  # could add = '' but have to rearrange order or do to all
     position: LocationData(-99.0, -99.0, -99.0, -99.0)
@@ -39,12 +64,6 @@ class Anchor:
 
     def get_as_dict(self):
         return asdict(self)
-
-
-@dataclass
-class Measurement:
-    result_tag: LocationData
-    result_imu: IMUData
 
 
 @dataclass
@@ -108,17 +127,3 @@ class Context:
     async def get_estimated_state(self):
         await self.new_estimated_state_event.wait()
         return self.estimated_state
-
-
-@dataclass
-class EstimatedState:
-    location_est: LocationData
-    x_v_est: float
-    y_v_est: float
-    log_likelihood: float
-    likelihood: float
-    x_acc_est: float
-    y_acc_est: float
-    yaw_est: float
-    yaw_acc_est: float
-    measurement: Measurement = None  # has result_tag, result_imu

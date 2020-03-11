@@ -5,18 +5,25 @@ import destination_icon from './Destination.svg'; // Tell webpack this JS file u
 
 import React, { useState } from "react";
 import ROSLIB from "roslib";
-import Worldview, { Arrows, Text, Lines, Cubes, Grid, Axes, Points } from "regl-worldview";
-import { Button, Navbar, Nav, ButtonGroup, Form, OverlayTrigger, Popover, ButtonToolbar } from 'react-bootstrap';
+import Worldview, { Arrows, Text, Lines, Cubes, Grid, Axes, Points, PolygonBuilder, DrawPolygons } from "regl-worldview";
+import { Button, Navbar, Nav, ButtonGroup, Tab, Tabs, OverlayTrigger, Popover, ButtonToolbar } from 'react-bootstrap';
 
 let anchorsArr = []
 let pointslength = 0;
 let tagpos = { x: 5, y: 5 };
 let tagOrientation = { x: 0, y: 0, z: 0, w: 0 }
 var teleopPub;
+let rosConnectionStablished = false;
 
+let targetPositionPolygon = new PolygonBuilder()
 function App() {
+  // TODO: Use OOP.
+
   const [count, setCount] = useState(0);
   const [commandMsgs, setCommandMsgs] = useState([]);
+  const [drawOnCanvas, setDrawOnCanvas] = useState(false);
+
+
 
   const validatedCount = isNaN(count) || count < 1 ? 6 : Math.round(count);
   useAnimationFrame(
@@ -83,28 +90,52 @@ function App() {
   function handleKeyCtrl(ev) {
     let instruction = ev.target.getAttribute('id');
     // publish control instruction to ROS.
-    switch (instruction) {
-      case "forward":
-        teleopPub.publish(new ROSLIB.Message({ data: "i" }));
-        break;
-      case "backward":
-        teleopPub.publish(new ROSLIB.Message({ data: "," }));
-        break;
-      case "left":
-        teleopPub.publish(new ROSLIB.Message({ data: "j" }));
-        break;
-      case "right":
-        teleopPub.publish(new ROSLIB.Message({ data: "l" }));
-        break;
-      case "stop":
-        teleopPub.publish(new ROSLIB.Message({ data: "k" }));
-        break;
 
-      default:
-        break;
+    if (rosConnectionStablished) {
+      switch (instruction) {
+        case "forward":
+
+          teleopPub.publish(new ROSLIB.Message({ data: "i" }));
+          break;
+        case "backward":
+          teleopPub.publish(new ROSLIB.Message({ data: "," }));
+          break;
+        case "left":
+          teleopPub.publish(new ROSLIB.Message({ data: "j" }));
+          break;
+        case "right":
+          teleopPub.publish(new ROSLIB.Message({ data: "l" }));
+          break;
+        case "stop":
+          teleopPub.publish(new ROSLIB.Message({ data: "k" }));
+          break;
+
+        default:
+          break;
+      }
     }
 
   }
+
+
+  function _handleEvent(eventName, ev, args) {
+    targetPositionPolygon[eventName](ev, args);
+    console.log(targetPositionPolygon.polygons[0].points);
+  };
+
+  function onDoubleClick(ev, args) {
+    _handleEvent("onDoubleClick", ev, args);
+  };
+  function onMouseDown(ev, args) {
+    _handleEvent("onMouseDown", ev, args);
+  };
+  function onMouseMove(ev, args) {
+    _handleEvent("onMouseMove", ev, args);
+  };
+  function onMouseUp(ev, args) {
+    _handleEvent("onMouseUp", ev, args);
+  };
+
 
   // Return
   return (
@@ -114,10 +145,32 @@ function App() {
         <Navbar.Brand href="#home">AUTOROS</Navbar.Brand>
 
         <Nav className="mr-auto">
-          <Nav.Link href="#home">Live</Nav.Link>
-          <Nav.Link href="#features">Dashboard</Nav.Link>
+          <Nav.Link href="#home">LIVE</Nav.Link>
+          <Nav.Link href="#features">DASHBOARD</Nav.Link>
         </Nav>
-        <Button variant="outline-primary"><img src={dest_icon} width="30px" /></Button>
+
+
+        <ButtonToolbar>
+          <OverlayTrigger
+            trigger="click"
+            key={"bottom"}
+            placement={"bottom"}
+            overlay={
+              <Popover id={`popover-positioned-${"bottom"}`}>
+                <Popover.Title as="h3">{`Draw the path and click Run`}</Popover.Title>
+                <Popover.Content>
+                  <ButtonGroup aria-label="Basic example">
+                    <Button id="btn_reset" variant="secondary">Reset</Button>{"  "}
+                    <Button id="btn_run" variant="primary" >Run</Button>
+                  </ButtonGroup>
+                </Popover.Content>
+              </Popover>
+            }
+          >
+            <Button variant="light"><img src={dest_icon} width="25px" onClick={() => setDrawOnCanvas(!drawOnCanvas)} /></Button>
+          </OverlayTrigger>
+        </ButtonToolbar>
+        {'.'}
         <ButtonToolbar>
           <OverlayTrigger
             trigger="click"
@@ -140,97 +193,117 @@ function App() {
               </Popover>
             }
           >
-            <Button variant="outline-primary"><img src={joystick} width="30px" /></Button>
+            <Button variant="light"><img src={joystick} width="25px" /></Button>
           </OverlayTrigger>
         </ButtonToolbar>
 
-      </Navbar>
-
-      <Worldview onClick={onWorldviewClick} enableStackedObjectEvents defaultCameraState={{
-        distance: 40,
-        phi: 0.5,
-        target: [tagpos.x, tagpos.y, 0],
-      }} style={{ width: "100vw", height: "90vh" }} >
 
 
+      </Navbar >
 
-        <Grid count={100} />
+      <Tabs bg="primary" id="controlled-tab-example"  >
+        <Tab eventKey="home" title="Live">
+          <Worldview onDoubleClick={onDoubleClick}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onClick={onWorldviewClick} enableStackedObjectEvents defaultCameraState={{
+              distance: 40,
+              phi: 0.5,
+              target: [tagpos.x, tagpos.y, 0],
+            }} style={{ width: "100vw", height: "90vh" }} >
 
 
 
-        <Axes />
-        <Cubes>
-          {[
-            {
-              pose: {
-                orientation: tagOrientation,
-                // position the cube at the center
-                position: { x: tagpos.x, y: tagpos.y, z: 0 },
-              },
-              scale: { x: 1, y: 1, z: 1 },
-              // rgba values are between 0 and 1 (inclusive)
-              color: { r: 1, g: 0, b: 0, a: 1 },
-            }
-          ]}
-        </Cubes>
+            <Grid count={100} />
 
-        {
-          anchorsArr.map((anchor, id) => (
 
-            <Cubes key={id}>
+
+            <Axes />
+            <Cubes>
               {[
                 {
+                  pose: {
+                    orientation: tagOrientation,
+                    // position the cube at the center
+                    position: { x: tagpos.x, y: tagpos.y, z: 0 },
+                  },
+                  scale: { x: 1, y: 1, z: 1 },
+                  // rgba values are between 0 and 1 (inclusive)
+                  color: { r: 1, g: 0, b: 0, a: 1 },
+                }
+              ]}
+            </Cubes>
+
+            {
+              anchorsArr.map((anchor, id) => (
+
+                <Cubes key={id}>
+                  {[
+                    {
+                      pose: {
+                        orientation: { x: 0, y: 0, z: 0, w: 1 },
+                        position: { x: 10 * anchor.x, y: 10 * anchor.y, z: 0 },
+                      },
+                      scale: { x: 1, y: 1, z: 1 },
+                      color: { r: 1, g: 0, b: 0, a: 1 },
+                    },
+                  ]}
+                </Cubes>
+              ))
+            }
+
+            {
+              anchorsArr.map((anchor, id) => (
+                <Text key={id}>{[{
+                  name: "",
+                  text: anchor.header.frame_id,
+                  color: { r: 1, g: 1, b: 1, a: 1 },
                   pose: {
                     orientation: { x: 0, y: 0, z: 0, w: 1 },
                     position: { x: 10 * anchor.x, y: 10 * anchor.y, z: 0 },
                   },
                   scale: { x: 1, y: 1, z: 1 },
-                  color: { r: 1, g: 0, b: 0, a: 1 },
-                },
-              ]}
-            </Cubes>
-          ))
-        }
+                  // uncomment colors and remove autoBackgroundColor prop to set text and background colors
+                  // colors: [{ r: 1, g: 1, b: 1, a: 1 }, { r: 1, g: 0, b: 0, a: 0.8 }],
+                }]}</Text>
+              ))
+            }
+            <Arrows>{[poseArrow1]}</Arrows>
 
-        {
-          anchorsArr.map((anchor, id) => (
-            <Text key={id}>{[{
-              name: "",
-              text: anchor.header.frame_id,
-              color: { r: 1, g: 1, b: 1, a: 1 },
-              pose: {
-                orientation: { x: 0, y: 0, z: 0, w: 1 },
-                position: { x: 10 * anchor.x, y: 10 * anchor.y, z: 0 },
-              },
-              scale: { x: 1, y: 1, z: 1 },
-              // uncomment colors and remove autoBackgroundColor prop to set text and background colors
-              // colors: [{ r: 1, g: 1, b: 1, a: 1 }, { r: 1, g: 0, b: 0, a: 0.8 }],
-            }]}</Text>
-          ))
-        }
-        <Arrows>{[poseArrow1]}</Arrows>
+            {
+              anchorsArr.map((anchor, id) => (
+                <Lines key={id}>{[{
+                  pose: {
+                    position: { x: 0, y: 0, z: 0 },
+                    orientation: { x: 0, y: 0, z: 0, w: 0 }
+                  },
+                  scale: { x: 0.1, y: 0.1, z: 0.1 },
+                  color: { r: 0, g: 1, b: 0, a: 1 },
+                  points: [
+                    { x: 10 * anchor.x, y: 10 * anchor.y, z: 0 },
+                    { x: tagpos.x, y: tagpos.y, z: 0 }
+                  ],
+                  colors: { r: 1, g: 1, b: 1, a: 1 }
+                }]}</Lines>
+              ))
+            }
 
-        {
-          anchorsArr.map((anchor, id) => (
-            <Lines key={id}>{[{
-              pose: {
-                position: { x: 0, y: 0, z: 0 },
-                orientation: { x: 0, y: 0, z: 0, w: 0 }
-              },
-              scale: { x: 0.1, y: 0.1, z: 0.1 },
-              color: { r: 0, g: 1, b: 0, a: 1 },
-              points: [
-                { x: 10 * anchor.x, y: 10 * anchor.y, z: 0 },
-                { x: tagpos.x, y: tagpos.y, z: 0 }
-              ],
-              colors: { r: 1, g: 1, b: 1, a: 1 }
-            }]}</Lines>
-          ))
-        }
 
-        <Points>{[pointsMarker]}</Points>
+            <DrawPolygons>{targetPositionPolygon.polygons}</DrawPolygons>
 
-      </Worldview >
+
+            {/* <Points>{[pointsMarker]}</Points> */}
+
+          </Worldview >
+
+        </Tab>
+        <Tab eventKey="profile" title="DASHBOARD">
+          asdasd
+        </Tab>
+
+      </Tabs>
+
 
     </div >
   );
@@ -239,15 +312,18 @@ function App() {
   function onWorldviewClick(ev, { objects }) {
     const messages = objects.map(({ object, instanceIndex }) => {
       if (object.points && instanceIndex >= 0 && instanceIndex <= points.length) {
-        return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
-          object.points[instanceIndex]
-        )}`;
+        // return object.points[instanceIndex]
+        // return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
+        //   object.points[instanceIndex]
+        // )}`;
       }
-      return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
-        object.pose.position
-      )}`;
+      // return object.pose.position;
+      // return `Clicked ${object.info}. The objectId is ${object.id} and its position is ${JSON.stringify(
+      //   object.pose.position
+      // )}`;
+      console.log(object.points[instanceIndex]);
     });
-    setCommandMsgs(messages);
+    // setCommandMsgs(messages);
   }
 }
 
@@ -262,6 +338,7 @@ function ConnectROSbridge() {
 
   ros.on("connection", function () {
     console.log("Connected to websocket server.");
+    rosConnectionStablished = true;
 
     // create a listener
     var AnchorsListener = new ROSLIB.Topic({
@@ -313,6 +390,7 @@ function ConnectROSbridge() {
 
   ros.on("close", function () {
     console.log("Connection to websocket server closed.");
+    rosConnectionStablished = false;
   });
 }
 ConnectROSbridge();

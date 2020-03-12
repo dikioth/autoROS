@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from serial_with_dwm import LocationData, Measurement
+from custom_msgs import LocationData, Measurement
 
 
 @dataclass

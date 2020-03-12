@@ -1,5 +1,6 @@
 from gpiozero import Servo, AngularServo
 import gpiozero.pins
+import time
 
 
 class Car:
@@ -62,7 +63,7 @@ class Car:
 
         self.motor_servo.value = speed
 
-    async def brake(self):
+     def brake(self):
         if self.current_direction > 0:
             print("Braking")
             self.motor_servo.value = -1
@@ -71,7 +72,7 @@ class Car:
             self.motor_servo.value = 0
         self.current_direction = 0
 
-    async def reverse(self):
+     def reverse(self):
         self.brake()
         print("Waiting in neutral...")
         self.set_acceleration(0)
@@ -79,5 +80,6 @@ class Car:
 
 if __name__ == '__main__':
     car = Car()
-    delay(3000)
-    car.set_acceleration(1)
+    car.set_acceleration(1e-3)
+    time.sleep(5)
+    car.brake()

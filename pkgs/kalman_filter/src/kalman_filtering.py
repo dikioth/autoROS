@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 from filterpy.kalman import KalmanFilter
 
-from custom_msgs import Measurement, LocationData, EstimatedState, IMUData
+from custom_msgs import LocationData, EstimatedState, IMUData
 
 
 # var_x and var_y in meters

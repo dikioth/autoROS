@@ -1,5 +1,7 @@
 from gpiozero import Servo, AngularServo
 import gpiozero.pins
+
+
 class Car:
 
     def __init__(self, offline_debug=False):
@@ -19,8 +21,11 @@ class Car:
         min_pulse_width = motor_min_duty * 20/1000
         max_pulse_width = motor_max_duty * 20/1000
 
-        self.steering_servo = AngularServo(13, pin_factory=factory, initial_angle=-9.5, min_angle=-45, max_angle=45)  # initial_value=-0.2, pin_factory=factory)
-        self.motor_servo = Servo(19, pin_factory=factory, min_pulse_width=min_pulse_width, max_pulse_width=max_pulse_width)
+        # initial_value=-0.2, pin_factory=factory)
+        self.steering_servo = AngularServo(
+            13, pin_factory=factory, initial_angle=-9.5, min_angle=-45, max_angle=45)
+        self.motor_servo = Servo(
+            19, pin_factory=factory, min_pulse_width=min_pulse_width, max_pulse_width=max_pulse_width)
 
     def stop(self):
         self.steering_servo.mid()
@@ -72,6 +77,7 @@ class Car:
         self.set_acceleration(0)
 
 
-
 if __name__ == '__main__':
-
+    car = Car()
+    delay(3000)
+    car.set_acceleration(1)

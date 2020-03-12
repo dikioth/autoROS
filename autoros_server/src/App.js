@@ -2,6 +2,7 @@ import { useAnimationFrame } from "@cruise-automation/hooks";
 import joystick from './Joystick.svg'; // Tell webpack this JS file uses this image
 import dest_icon from './Destination.svg'; // Tell webpack this JS file uses this image
 import destination_icon from './Destination.svg'; // Tell webpack this JS file uses this image
+import { Line } from 'react-chartjs-2';
 
 import React, { useState } from "react";
 import ROSLIB from "roslib";
@@ -145,8 +146,7 @@ function App() {
         <Navbar.Brand href="#home">AUTOROS</Navbar.Brand>
 
         <Nav className="mr-auto">
-          <Nav.Link href="#home">LIVE</Nav.Link>
-          <Nav.Link href="#features">DASHBOARD</Nav.Link>
+          <Nav.Link href="#home">Github</Nav.Link>
         </Nav>
 
 
@@ -299,7 +299,7 @@ function App() {
 
         </Tab>
         <Tab eventKey="profile" title="DASHBOARD">
-          asdasd
+          < Line data={[6, 3, 2, 2, 7, 26, 82, 172, 312, 433]} />
         </Tab>
 
       </Tabs>

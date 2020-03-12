@@ -26,7 +26,7 @@ class IMUData:
 
 async def start_IMU(connection):
     try:
-        await asyncio.wait_for(calibrate_IMU(connection), timeout=10)
+        asyncio.wait_for(calibrate_IMU(connection), timeout=10)
     except asyncio.TimeoutError:
         logging.getLogger('asyncio').error("IMU setup timed out.")
         return False
@@ -41,7 +41,7 @@ async def calibrate_IMU(connection):
         line = connection.readline().strip()
         line = line.decode()
         match = re.match("Send any character to begin DMP programming and demo:", line)
-        await asyncio.sleep(0.1)
+        asyncio.sleep(0.1)
 
     connection.write(b'a\n')
 
@@ -51,7 +51,7 @@ async def calibrate_IMU(connection):
         line = connection.readline().strip()
         line = line.decode()
         match = re.match("DMP ready! Waiting for first interrupt...", line)
-        await asyncio.sleep(0.1)
+        asyncio.sleep(0.1)
 
     connection.flushInput()
     logging.getLogger('asyncio').info("IMU startup complete.")

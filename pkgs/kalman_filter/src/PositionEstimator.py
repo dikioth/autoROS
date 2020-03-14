@@ -18,11 +18,11 @@ class PositionEstimator:
                  uwb_only_kf,
                  update_delay=0.1):
 
+        self.process_var_pos = process_dev_pos
         self.process_var_acc = process_dev_acc
-        self.process_var_vel = process_dev_vel
         self.process_var_heading = process_dev_heading
         self.process_var_heading_acc = process_dev_heading_acc
-        self.process_var_pos = process_dev_pos
+        self.process_var_vel = process_dev_vel
         self.meas_var_pos = meas_dev_pos
         self.meas_var_heading = meas_dev_heading
         self.meas_var_acc = meas_dev_acc
@@ -63,7 +63,10 @@ class PositionEstimator:
                                      meas_var_pos=self.meas_var_pos
                                      )
 
-    def do_kalman_updates(self, loc_data, imu_data, control_signal):
+    def do_kalman_updates(self, measurements,  control_signal):
+
+        loc_data = measurements.pose.pose.position
+        imu_data = measurements.imu_data
 
         if self.variable_dt:
             d_t = time.time() - self.time

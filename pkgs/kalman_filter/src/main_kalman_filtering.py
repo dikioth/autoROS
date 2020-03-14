@@ -1,10 +1,11 @@
 import rospy
 import numpy as np
 from custom_msgs import *
-from sensor_msgs.msg import Imu
+# from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
 from PositionEstimator import PositionEstimator
+from kalman_filter.msgs import Measurement
 
 
 class Estimator:
@@ -16,6 +17,7 @@ class Estimator:
         self.yaw = 0
         self.tan_u = 0
         self.start = True
+        self.measurements = Measurement()
 
     def main(self):
         rospy.init_node('autoros_ekf', anonymous=True)
@@ -25,17 +27,18 @@ class Estimator:
         rospy.spin()
 
     def tag_callback(self, data):
-        self.meas.x = data.pose.pose.position.x
-        self.meas.y = data.pose.pose.position.y
-
-        self.loc_data = LocationData(x, y, 1.5, 100)
+        self.measurements.pose.pose.position = data.pose.pose.position
+        # self.loc_data = LocationData(x, y, 1.5, 100)
 
     def imu_callback(self, data):
+        self.measurements.imu_data.orientation = data.orientation
+        self.measurements.imu_data.linear_acceleration = data.linear_acceleration
+
         # imu callback
 
-        real_acc = Transform(0, 0, 0)
-        world_acc = Transform(data.linear_acceleration.x,
-                              a_w_y.linear_acceleration.y, 0)
+        # real_acc = Transform(0, 0, 0)
+        # world_acc = Transform(data.linear_acceleration.x,
+        #                       a_w_y.linear_acceleration.y, 0)
 
         rpy_radians = euler_from_quaternion(
             data.orientation)  # RPY in radians
@@ -43,20 +46,22 @@ class Estimator:
         yaw = rpy_degree[2]
         if yaw < 0:
             yaw += 360
-        rotation = Rotation(yaw, 0, 0)
 
-        self.imu_data = IMUData(
-            rotation=rotation, real_acceleration=real_acc, world_acceleration=world_acc)
+        # rotation = Rotation(yaw, 0, 0)
+
+        # self.imu_data = IMUData(
+        #     rotation=rotation, real_acceleration=real_acc, world_acceleration=world_acc)
 
     def set_steering(self, u_yaw):
         self.tan_u = np.tan(u_yaw)
 
     def loop(self):
 
-        measurement = Measurement(self.loc_data, self.imu_data)
+        # measurement = Measurement(self.loc_data, self.imu_data)
         control_signal = ControlSignal(0, self.tan_u)
         if self.start:
-            position_estimator.start_kalman_filter(loc_data)
+            position_estimator.start_kalman_filter(
+                self.measurements.pose.pose.position)
             self.start = False
 
         estimated_state = position_estimator.do_kalman_updates(

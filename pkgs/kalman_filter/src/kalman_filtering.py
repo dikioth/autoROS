@@ -1,204 +1,275 @@
-from dataclasses import dataclass
-
 import numpy as np
 from filterpy.kalman import KalmanFilter
-
-from custom_msgs import LocationData, EstimatedState, IMUData
+from nav_msgs.msg import Odometry
+# from custom_msgs import LocationData, EstimatedState, IMUData
 
 
 # var_x and var_y in meters
-def init_kalman_filter(loc_data, dt,
-                       process_var_acc, process_var_vel, process_var_heading,
-                       process_var_heading_acc, process_var_pos,
-                       meas_var_pos, meas_var_heading, meas_var_acc, speed_div_by_length,
-                       use_acc, dim_x, dim_z, dim_u):
-    kf = KalmanFilter(dim_x=dim_x, dim_z=dim_z, dim_u=dim_u)
-    # init state vector x
-    kf.x = set_x(loc_data, use_acc=use_acc)
-    kf.F = set_F(dt, use_acc=use_acc)
-    kf.H = set_H(use_acc=use_acc)
-    kf.B = set_B(speed_div_by_length=speed_div_by_length, use_acc=use_acc)
 
-    kf.P *= 10
+class Kalman:
+    '''
+        The Kalman Filter
 
-    kf.R = set_R(var_acc=meas_var_acc, var_position=meas_var_pos,
-                 var_heading=meas_var_heading, use_acc=use_acc)  # measurement noise
-    kf.Q = set_Q(dt, var_x=process_var_pos, var_y=process_var_pos, var_acc=process_var_acc,
-                 var_heading=process_var_heading, var_heading_acc=process_var_heading_acc,
-                 var_velocity=process_var_vel, use_acc=use_acc)  # process noise
+        Args:
+            odom (Odometry msg): The odometry data containing the Pose (position and orientation) 
+                             and Twist (Linear and angluar velocity).
 
-    return kf
+        Attributes:
+            arg (str): This is where we store arg,
+    '''
 
+    def __init__(self,
+                 odom,
+                 dt,
+                 process_var_acc,
+                 process_var_vel,
+                 process_var_heading,
+                 process_var_heading_acc,
+                 process_var_pos,
+                 meas_var_pos,
+                 meas_var_heading,
+                 meas_var_acc,
+                 speed_div_by_length,
+                 use_acc,
+                 dim_x,
+                 dim_z,
+                 dim_u):
 
-def set_x(loc_data, use_acc):
-    if use_acc:
-        x = np.zeros([8, 1])
-        x[0, 0] = loc_data.x
-        x[1, 0] = loc_data.y
-    else:
-        # initialize with first loc_data x and y, 0 in v and a
-        x = np.array([[loc_data.x], [loc_data.y], [0.0], [0.0]])
-    return x
+        # initialize Kalman filter
+        self.kf = KalmanFilter(dim_x=dim_x, dim_z=dim_z, dim_u=dim_u)
 
+        # init state vector x
+        self.kf.X = self.__setX(odom.pose.pose.position, use_acc=use_acc)
+        self.kf.F = self.__setF(dt, use_acc=use_acc)
+        self.kf.H = self.__setH(use_acc=use_acc)
+        self.kf.B = self.__setB(c=speed_div_by_length, use_acc=use_acc)
 
-def set_F(dt, use_acc=False):
-    if use_acc:  # dim_x = 6, dim_z = 4
-        f = np.array([[1., 0., 0., 0, dt, 0., 0.5 * dt * dt, 0.],
-                      [0., 1., 0., 0., 0., dt, 0., 0.5 * dt * dt],
-                      [0., 0., 1., dt, 0., 0., 0., 0.],
-                      [0., 0., 0., 1., 0., 0., 0., 0.],
-                      [0., 0., 0., 0., 1., 0., dt, 0.],
-                      [0., 0., 0., 0., 0., 1., 0., dt],
-                      [0., 0., 0., 0., 0., 0., 1., 0.],
-                      [0., 0., 0., 0., 0., 0., 0., 1.]]
-                     )
-    else:
-        f = np.array([[1., 0., dt, 0],
-                      [0., 1., 0, dt],
-                      [0., 0., 1., 0.],
-                      [0., 0., 0., 1.]])
+        self.kf.P *= 10
 
-    return f
+        self.kf.R = self.__setR(var_acc=meas_var_acc, var_position=meas_var_pos,
+                                var_heading=meas_var_heading, use_acc=use_acc)  # measurement noise
+        self.kf.Q = self.__setQ(dt, var_x=process_var_pos, var_y=process_var_pos, var_acc=process_var_acc,
+                                var_heading=process_var_heading, var_heading_acc=process_var_heading_acc,
+                                var_velocity=process_var_vel, use_acc=use_acc)  # process noise
 
+    def __setX(self, position, use_acc=False):
+        '''
+            Args:
+                position: A geometry_msgs/Point msg containing the x,y,z position.
+            Returns:
+                X: a 8x1 matrix containing the state space [x,y,theta, theta_dot, xdot, ydot, xddot, yddot]^T
+        '''
 
-def set_H(use_acc=False):
-    if use_acc:
-        h = np.array([[1., 0., 0., 0., 0., 0., 0., 0.],
-                      [0., 1., 0., 0., 0., 0., 0., 0.],
-                      [0., 0., 1., 0., 0., 0., 0., 0.],
-                      [0., 0., 0., 0., 0., 0., 1., 0.],
-                      [0., 0., 0., 0., 0., 0., 0., 1.]])
-    else:
-        h = np.array([[1., 0., 0., 0.],
-                      [0., 1., 0., 0.]])
-    return h
+        if use_acc:
+            x = np.zeros([8, 1])
+            x[0, 0] = position.x
+            x[1, 0] = position.y
+        else:
+            # initialize with first position x and y, 0 in v and a
+            x = np.array([[position.x], [position.y], [0.0], [0.0]])
+        return x
 
+    def __setF(self, dt, use_acc=False):
+        '''
+            Args:
+                dt: The time step.
+            Returns:
+                F: The process matrix.
+        '''
+        if use_acc:  # dim_x = 6, dim_z = 4
+            F = np.array([[1., 0., 0., 0,  dt, 0., 0.5 * dt * dt, 0.],
+                          [0., 1., 0., 0., 0., dt, 0., 0.5 * dt * dt],
+                          [0., 0., 1., dt, 0., 0., 0., 0.],
+                          [0., 0., 0., 1., 0., 0., 0., 0.],
+                          [0., 0., 0., 0., 1., 0., dt, 0.],
+                          [0., 0., 0., 0., 0., 1., 0., dt],
+                          [0., 0., 0., 0., 0., 0., 1., 0.],
+                          [0., 0., 0., 0., 0., 0., 0., 1.]]
+                         )
+        else:
+            F = np.array([[1., 0., dt, 0],
+                          [0., 1., 0, dt],
+                          [0., 0., 1., 0.],
+                          [0., 0., 0., 1.]])
 
-def set_Q(dt, var_heading, var_heading_acc, var_velocity, use_acc=True, var_x=0.0, var_y=0.0,
-          var_acc=0.5):  # TODO: prune
-    if use_acc:
-        var_acc_x = var_acc
-        var_acc_y = var_acc
-        q = np.array([[var_x, 0., 0., 0., 0., 0., 0., 0.],
-                      [0., var_y, 0., 0., 0., 0., 0., 0.],
-                      [0., 0., var_heading, 0., 0., 0., 0., 0.],
-                      [0., 0., 0., var_heading_acc, 0., 0., 0., 0.],
-                      [0., 0., 0., 0., var_velocity, 0., 0., 0.],
-                      [0., 0., 0., 0., 0., var_velocity, 0., 0.],
-                      [0., 0., 0., 0., 0., 0., var_acc_x, 0.],
-                      [0., 0., 0., 0., 0., 0., 0., var_acc_y]
-                      ])
-    else:  # remove this if acc is good
-        var_x_dot = var_velocity
-        var_y_dot = var_velocity
-        q = np.array([[var_x, 0., 0., 0.],
-                      [0., var_y, 0., 0.],
-                      [0., 0., var_x_dot, 0.],
-                      [0., 0., 0., var_y_dot]])
-    return q
+        return F
 
+    def __setH(self, use_acc=False):
+        if use_acc:
+            H = np.array([[1., 0., 0., 0., 0., 0., 0., 0.],
+                          [0., 1., 0., 0., 0., 0., 0., 0.],
+                          [0., 0., 1., 0., 0., 0., 0., 0.],
+                          [0., 0., 0., 0., 0., 0., 1., 0.],
+                          [0., 0., 0., 0., 0., 0., 0., 1.]])
+        else:
+            H = np.array([[1., 0., 0., 0.],
+                          [0., 1., 0., 0.]])
+        return H
 
-def set_B(speed_div_by_length, use_acc):
-    if use_acc:
-        b = np.zeros([8, 1])
-        b[3, 0] = speed_div_by_length
-    else:
-        b = 0
-    return b
+    def __setQ(self, dt, pose_cov, twist_cov,  var_heading, var_heading_acc, var_velocity, use_acc=False, var_x=0.0, var_y=0.0, var_acc=0.5):
+        '''
+        setQ: Private method that computes the measurement covariance matrix Q.
 
+        The variance of the position (x,y,z) is substracted from the ROS msg: geometry_msgs/PoseWithCovariance.
+        The variance of the position (-,-,yaw) is substracted from the ROS msg: geometry_msgs/PoseWithCovariance
 
-def measurement_update(loc_data, imu_data: IMUData, use_acc=False):
-    if use_acc:
-        z = np.array(
-            [[loc_data.x],
-             [loc_data.y],
-             [imu_data.rotation.yaw],
-             [imu_data.world_acceleration.x],
-             [imu_data.world_acceleration.y]]
-        )
-    else:
-        z = [[loc_data.x],
-             [loc_data.y]]
-    return z
+        The variance of the angular velocity, orientation and linear acceleration is extracted from the ROS msg: sensor_msgs/Imu.msg.
 
 
-def set_R(var_position, var_acc, var_heading, use_acc=False):  # TODO: call this function set_R ?
-    var_x = var_position
-    var_y = var_position
+            Args:
+                pose_cov: A 6x6 diagonal matrix containing the variance of the position (x,y,z) and orientation (roll, pitch, yaw).
+                          OBS: only x,y will be used since it is assumed that the robot moves in 2D. The entire 6x6 matrix is sent to be
+                          compatible with the ROS message geometry_msgs/PoseWithCovariance.msg.
 
-    if use_acc:
-        var_acc_y = var_acc
-        var_acc_x = var_acc
-        r = np.array([[var_x, 0., 0., 0., 0.],
-                      [0., var_y, 0., 0., 0.],
-                      [0., 0., var_heading, 0., 0.],
-                      [0., 0., 0., var_acc_x, 0.],
-                      [0., 0., 0., 0., var_acc_y]])
-    else:
-        r = np.array([[var_x, 0.],
-                      [0., var_y]])
-    return r
+                twist_cov: A 6x6 diagonal matrix containing the variance of the Twist (3x3 linear and 3x3 angular velocity).
+                          OBS: only x,y will be used since it is assumed that the robot moves in 2D. The entire 6x6 matrix is sent to be
+                          compatible with the ROS message geometry_msgs/PoseWithCovariance.msg.
 
+            Returns:
+                Q: The measurement noise covariance matrix. 
 
-# # #
-# kalman_updates: performs the prediction and update of the Kalman filter
-# If the loc_data is None we keep the last z, but we make the covariance matrix for the measurements
-# have ~infinity numbers, so the prediction is vastly favored over the measurement.
-# Returns: a location estimate as a LocationData
-def kalman_updates(kf, loc_data, imu_data: IMUData, timestep, variance_position, variance_acceleration, variance_heading,
-                   process_var_heading, process_var_pos, process_var_acc,
-                   process_var_heading_acc, process_var_velocity, u=None, use_acc=True):
-    kf.F = set_F(timestep, use_acc=use_acc)
-    kf.Q = set_Q(timestep, var_x=process_var_pos, var_y=process_var_pos,
-                 var_acc=process_var_acc, var_heading=process_var_heading, var_heading_acc=process_var_heading_acc,
-                 var_velocity=process_var_velocity, use_acc=use_acc)
-    if loc_data is not None:
-        z = measurement_update(loc_data, imu_data, use_acc=use_acc)
-        kf.R = set_R(var_position=variance_position, var_acc=variance_acceleration, var_heading=variance_heading,
-                     use_acc=use_acc)
-        loc_quality = loc_data.quality
-    else:
-        z = kf.z
-        kf.R = set_R(var_position=500, var_acc=500, var_heading=500,
-                     use_acc=use_acc)  # High value, prefer process model
-        loc_quality = -99
+        '''
+        if use_acc:
+            var_acc_x = var_acc
+            var_acc_y = var_acc
 
-    u_rad = np.deg2rad(u[1])
+            q = np.array([[var_x, 0., 0., 0., 0., 0., 0., 0.],
+                          [0., var_y, 0., 0., 0., 0., 0., 0.],
+                          [0., 0., var_heading, 0., 0., 0., 0., 0.],
+                          [0., 0., 0., var_heading_acc, 0., 0., 0., 0.],
+                          [0., 0., 0., 0., var_velocity, 0., 0., 0.],
+                          [0., 0., 0., 0., 0., var_velocity, 0., 0.],
+                          [0., 0., 0., 0., 0., 0., var_acc_x, 0.],
+                          [0., 0., 0., 0., 0., 0., 0., var_acc_y]
+                          ])
+        else:  # remove this if acc is good
+            var_x_dot = var_velocity
+            var_y_dot = var_velocity
+            q = np.array([[var_x, 0., 0., 0.],
+                          [0., var_y, 0., 0.],
+                          [0., 0., var_x_dot, 0.],
+                          [0., 0., 0., var_y_dot]])
+        return q
 
-    kf.predict(u=u_rad)
-    kf.update(z)
+    def __setB(self, c, use_acc=False):
+        '''
+            Args:
+                c : The speed divided by length v/L according to Ackerman equation.
+            Returns:
+                B : The B matrix.
+        '''
+        if use_acc:
+            B = np.zeros([8, 1])
+            B[3, 0] = c
+        else:
+            B = 0
+        return B
 
-    # Values for estimated state as floats, showing two decimals
-    x_kf = float_with_2_decimals(kf.x[0, 0])
-    y_kf = float_with_2_decimals(kf.x[1, 0])
+    def __measurement_update(self, position, imu_data, use_acc=False):
+        if use_acc:
+            z = np.array(
+                [[position.x],
+                 [position.y],
+                 [imu_data.rotation.yaw],
+                 [imu_data.linear_acceleration.x],
+                 [imu_data.linear_acceleration.y]]
+            )
+        else:
+            z = [[position.x],
+                 [position.y]]
+        return z
 
-    if use_acc:
-        yaw_kf = float_with_2_decimals(kf.x[2, 0])
-        yaw_acc_kf = float_with_2_decimals(kf.x[3, 0])
-        x_v_est = float_with_2_decimals(kf.x[4, 0])
-        y_v_est = float_with_2_decimals(kf.x[5, 0])
-        x_acc_est = float_with_2_decimals(kf.x[6, 0])
-        y_acc_est = float_with_2_decimals(kf.x[7, 0])
-    else:
-        x_v_est = float_with_2_decimals(kf.x[2, 0])
-        y_v_est = float_with_2_decimals(kf.x[3, 0])
-        yaw_kf = float_with_2_decimals(0)
-        yaw_acc_kf = float_with_2_decimals(0)
-        x_acc_est = float_with_2_decimals(0)
-        y_acc_est = float_with_2_decimals(0)
+    # TODO: call this function set_R ?
+    def __setR(self, var_position, var_acc, var_heading, use_acc=False):
+        var_x = var_position
+        var_y = var_position
 
-    log_likelihood = float_with_2_decimals(kf.log_likelihood)
-    likelihood = float_with_2_decimals(kf.likelihood)
+        if use_acc:
+            var_acc_y = var_acc
+            var_acc_x = var_acc
+            r = np.array([[var_x, 0., 0., 0., 0.],
+                          [0., var_y, 0., 0., 0.],
+                          [0., 0., var_heading, 0., 0.],
+                          [0., 0., 0., var_acc_x, 0.],
+                          [0., 0., 0., 0., var_acc_y]])
+        else:
+            r = np.array([[var_x, 0.],
+                          [0., var_y]])
+        return r
 
-    filtered_loc = LocationData(x=x_kf, y=y_kf, z=0, quality=loc_quality)
-    estimated_state = EstimatedState(filtered_loc, x_v_est=x_v_est, y_v_est=y_v_est, yaw_est=yaw_kf,
-                                     yaw_acc_est=yaw_acc_kf,
-                                     log_likelihood=log_likelihood, likelihood=likelihood,
-                                     x_acc_est=x_acc_est, y_acc_est=y_acc_est)
+    ####################################################################################################
+    # kalman_updates: performs the prediction and update of the Kalman filter
+    # If the position is None we keep the last z, but we make the covariance matrix for the measurements
+    # have ~infinity numbers, so the prediction is vastly favored over the measurement.
+    # Returns: a location estimate as a LocationData
+    def kalman_updates(self,
+                       position,
+                       imu_data,
+                       timestep,
+                       variance_position,
+                       variance_acceleration,
+                       variance_heading,
+                       process_var_heading,
+                       process_var_pos,
+                       process_var_acc,
+                       process_var_heading_acc,
+                       process_var_velocity,
+                       u=None,
+                       use_acc=True):
 
-    return estimated_state
+        self.kf.F = set_F(timestep, use_acc=use_acc)
+        self.kf.Q = set_Q(timestep, var_x=process_var_pos, var_y=process_var_pos,
+                          var_acc=process_var_acc, var_heading=process_var_heading, var_heading_acc=process_var_heading_acc,
+                          var_velocity=process_var_velocity, use_acc=use_acc)
+        if position is not None:
+            z = self.__measurement_update(position, imu_data, use_acc=use_acc)
+            self.kf.R = set_R(var_position=variance_position, var_acc=variance_acceleration, var_heading=variance_heading,
+                              use_acc=use_acc)
+        else:
+            z = self.kf.z
+            self.kf.R = set_R(var_position=500, var_acc=500, var_heading=500,
+                              use_acc=use_acc)  # High value, prefer process model
 
+        u_rad = np.deg2rad(u[1])
 
-def float_with_2_decimals(value):
-    two_decimal_float = float("{0:.2f}".format(value))
-    return two_decimal_float
+        self.kf.predict(u=u_rad)
+        self.kfupdate(z)
+
+        # Values for estimated state as floats, showing two decimals
+        x_kf = self.__float_with_2_decimals(self.kfx[0, 0])
+        y_kf = self.__float_with_2_decimals(self.kfx[1, 0])
+
+        if use_acc:
+            yaw_kf = self.__float_with_2_decimals(self.kfx[2, 0])
+            yaw_acc_kf = self.__float_with_2_decimals(self.kfx[3, 0])
+            x_v_est = self.__float_with_2_decimals(self.kfx[4, 0])
+            y_v_est = self.__float_with_2_decimals(self.kfx[5, 0])
+            x_acc_est = self.__float_with_2_decimals(self.kfx[6, 0])
+            y_acc_est = self.__float_with_2_decimals(self.kfx[7, 0])
+        else:
+            x_v_est = self.__float_with_2_decimals(self.kfx[2, 0])
+            y_v_est = self.__float_with_2_decimals(self.kfx[3, 0])
+            yaw_kf = self.__float_with_2_decimals(0)
+            yaw_acc_kf = self.__float_with_2_decimals(0)
+            x_acc_est = self.__float_with_2_decimals(0)
+            y_acc_est = self.__float_with_2_decimals(0)
+
+        log_likelihood = self.__float_with_2_decimals(self.kflog_likelihood)
+        likelihood = self.__float_with_2_decimals(self.kflikelihood)
+
+        filtered_loc = LocationData(x=x_kf, y=y_kf, z=0, quality=loc_quality)
+        estimated_state = EstimatedState(filtered_loc,
+                                         x_v_est=x_v_est,
+                                         y_v_est=y_v_est,
+                                         yaw_est=yaw_kf,
+                                         yaw_acc_est=yaw_acc_kf,
+                                         log_likelihood=log_likelihood,
+                                         likelihood=likelihood,
+                                         x_acc_est=x_acc_est,
+                                         y_acc_est=y_acc_est)
+
+        return estimated_state
+
+    def __float_with_2_decimals(self, value):
+        two_decimal_float = float("{0:.2f}".format(value))
+        return two_decimal_float

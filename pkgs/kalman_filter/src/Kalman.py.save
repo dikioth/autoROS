@@ -1,8 +1,8 @@
 '''
-The kalman filter.
 Author: Elvis Rodas.
+
 '''
-import rospy
+from pprint import pprint
 import numpy as np
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
@@ -64,7 +64,10 @@ class Kalman:
     '''
 
     def __init__(self, odom, imu, dt, only_uwb=False):
-        # TODO: Explanation 'c'
+        pprint(vars(odom{"pose"]}
+
+))
+	# TODO: Explanation 'c'
         c = 0.9  # Speed divided by length.
 
         self.only_uwb = only_uwb
@@ -83,7 +86,7 @@ class Kalman:
         self.kf = KalmanFilter(dim_x=dim_x, dim_z=dim_z, dim_u=dim_u)
 
         # init state vector and matrices.
-        self.kf.x = self.__setX(odom.pose.pose.position)
+        self.kf.X = self.__setX(odom.pose.pose.position)
         self.kf.F = self.__setF(dt)
         self.kf.B = self.__setB(c)
         self.kf.H = self.__setH()
@@ -96,8 +99,7 @@ class Kalman:
         # Diagonal elements of process covariance matrix.
         # TODO: let user input the process covariance matrix Q.
         defaultQ = np.array([.0, .0, .0, .08, .1, .1,  .08, .08])
-        self.kf.Q = self.__setQ(defaultQ)  # process noise
-        rospy.loginfo("KF initiated")
+        self.kf.Q = self.__setQ(dt, defaultQ)  # process noise
 
     def __setX(self, position):
         '''
@@ -113,13 +115,12 @@ class Kalman:
         '''
 
         if self.only_uwb:
-            # initialize with first position x and y, 0 in v and a
-            X = np.array([[position.x], [position.y], [0.0], [0.0]])
-        else:
             X = np.zeros([8, 1])
             X[0, 0] = position.x
             X[1, 0] = position.y
-
+        else:
+            # initialize with first position x and y, 0 in v and a
+            X = np.array([[position.x], [position.y], [0.0], [0.0]])
         return X
 
     def __setF(self, dt):
@@ -129,14 +130,7 @@ class Kalman:
             Returns:
                 F: The process matrix.
         '''
-
         if self.only_uwb:  # dim_x = 6, dim_z = 4
-            F = np.array([[1., 0., dt, 0],
-                          [0., 1., 0, dt],
-                          [0., 0., 1., 0.],
-                          [0., 0., 0., 1.]])
-        else:
-
             F = np.array([[1., 0., 0., 0,  dt, 0., 0.5 * dt * dt, 0.],
                           [0., 1., 0., 0., 0., dt, 0., 0.5 * dt * dt],
                           [0., 0., 1., dt, 0., 0., 0., 0.],
@@ -146,6 +140,11 @@ class Kalman:
                           [0., 0., 0., 0., 0., 0., 1., 0.],
                           [0., 0., 0., 0., 0., 0., 0., 1.]]
                          )
+        else:
+            F = np.array([[1., 0., dt, 0],
+                          [0., 1., 0, dt],
+                          [0., 0., 1., 0.],
+                          [0., 0., 0., 1.]])
 
         return F
 
@@ -160,25 +159,22 @@ class Kalman:
         c = 0.8  # v/L.
 
         if self.only_uwb:
-            B = 0
-        else:
             B = np.zeros([8, 1])
             B[3, 0] = c
-
+        else:
+            B = 0
         return B
 
     def __setH(self):
-
         if self.only_uwb:
-            H = np.array([[1., 0., 0., 0.],
-                          [0., 1., 0., 0.]])
-        else:
             H = np.array([[1., 0., 0., 0., 0., 0., 0., 0.],
                           [0., 1., 0., 0., 0., 0., 0., 0.],
                           [0., 0., 1., 0., 0., 0., 0., 0.],
                           [0., 0., 0., 0., 0., 0., 1., 0.],
                           [0., 0., 0., 0., 0., 0., 0., 1.]])
-
+        else:
+            H = np.array([[1., 0., 0., 0.],
+                          [0., 1., 0., 0.]])
         return H
 
     def __setQ(self, processQ):
@@ -194,11 +190,12 @@ class Kalman:
         '''
 
         if self.only_uwb:
+
+            Q = np.diag(processQ)
+        else:
             var_x_dot = processQ[0]
             var_y_dot = processQ[1]
-            Q = np.diag(np.array([var_x_dot, var_y_dot, 0.1, 0.1]))
-        else:
-            Q = np.diag(processQ)
+            Q = np.diag(np.array([var_x_dot, var_y_dot]))
 
         return Q
 
@@ -225,10 +222,11 @@ class Kalman:
         var_y_accel = linear_accel_var[1 + 3*0]
 
         if self.only_uwb:
-            R = np.diag(np.array([var_x, var_y]))
-        else:
+
             R = np.diag(
                 np.array([var_x, var_y, var_yaw, var_x_accel, var_y_accel]))
+        else:
+            R = np.diag(np.array([var_x, var_y]))
 
         return R
 
@@ -237,39 +235,6 @@ class Kalman:
         predic. Public method. Performs the first step of KF.
 
         '''
-        self.kf.predict()
+        self.kf.predic()
 
     def kalman_update(self, odom, imu):
-        '''
-        Update. Public method. Performs the second step of KF.
-
-        Args:
-            position: A Pose message (geometry_msgs/Pose.msg)
-            imu     : An Imu message (sensor_msgs/Imu.msg)
-        Returns:
-            None
-
-        '''
-        x = odom.pose.pose.position.x
-        y = odom.pose.pose.position.y
-
-        # Converting quaterions to euler angles.
-        orient = (imu.orientation.x, imu.orientation.y,
-                  imu.orientation.z, imu.orientation.w)
-
-        [roll, pitch, yaw] = euler_from_quaternion(orient)
-
-        # TODO: if yaw < 0: yaw += 360
-        yaw_vel = imu.angular_velocity.z
-
-        xddot = imu.linear_acceleration.x
-        yddot = imu.linear_acceleration.y
-
-        if self.only_uwb:
-            self.kf.update(np.array([[x], [y]]))
-        else:
-            self.kf.update(np.array([[x], [y], [yaw], [xddot], [yddot]]))
-
-    def get_estimation(self):
-        rospy.loginfo((self.kf.x[0][0], self.kf.x[1][0]))
-        return self.kf.x

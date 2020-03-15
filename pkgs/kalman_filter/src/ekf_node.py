@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 import numpy as np
 # from sensor_msgs.msg import Imu
@@ -18,34 +20,53 @@ class Estimator:
 
         # Creating publisher to broadcast the position estimation.
         self.odom_publisher = rospy.Publisher(
-            "/kalman_filter/odom_estimation", Odometry)
+            "/kalman_filter/odom_estimation", Odometry, queue_size=1)
 
         self.rate = rospy.Rate(10)  # Publish rate 10Hz
         # Atributes
         self.odom = Odometry
         self.imu = Imu
 
-        # Creating Kalman object
-        self.kalman = Kalman(self.odom, self.imu, 1e-3)
+        # Booleans to initiate the KF. TODO: Find a better way.
+        self.start = True
+        self.odom_start = True
+        self.imu_start = True
+        self.kalman = None
 
     def main(self):
 
-        rospy.loginfo("Running ...")
+        if self.start and not self.odom_start and not self.imu_start:
+            self.kalman = Kalman(self.odom, self.imu, 1e-3, only_uwb=True)
+            self.start = False
+            rospy.loginfo("KF initiated")
 
     def tag_callback(self, data):
         self.odom = data
-        # self.loc_data = LocationData(x, y, 1.5, 100)
+
+        if self.odom_start:
+            rospy.loginfo("Odom data received.")
+            self.odom_start = False
 
     def imu_callback(self, data):
         self.imu = data
+
+        if self.imu_start:
+            rospy.loginfo("IMu data received")
+            self.imu_start = False
 
     # def set_steering(self, u_yaw):
     #     self.tan_u = np.tan(u_yaw)
 
     def loop(self):
-        self.kalman.kalman_predic()
-        self.kalman.kalman_update(self.odom, self.imu)
-        rospy.loginfo(self.kalman.get_estimation())
+
+        if self.start:
+
+            self.main()
+        else:
+            self.kalman.kalman_predic()
+            self.kalman.kalman_update(self.odom, self.imu)
+
+            self.kalman.get_estimation()
         self.rate.sleep()
 
 

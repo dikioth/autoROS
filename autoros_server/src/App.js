@@ -389,7 +389,7 @@ function App() {
 function ConnectROSbridge() {
   // Connecting to ROS websockets
   var ros = new ROSLIB.Ros({
-    url: "ws://localhost:9090"
+    url: "ws://robot.local:9090"
   });
 
   ros.on("connection", function() {

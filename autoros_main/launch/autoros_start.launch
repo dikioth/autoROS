@@ -1,8 +1,12 @@
 <launch>
+  <!-- Launching websocket server -->
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+
+
   <include file="$(find localizer_dwm1001)/launch/dwm1001.launch"/>
   <node pkg="localizer_dwm1001" name="dwm1001_tag_to_pose_convert" type="dwm1001_tag_to_pose_convert.py" />
   <node pkg="localizer_dwm1001" name="dwm1001_to_odom_convert" type="dwm1001_to_odom_convert.py" />
- <!-- <node pkg="autoros_main" name="imu_odom_broadcaster" type="imu_odom_broadcaster.py" /> -->
+  <!-- <node pkg="autoros_main" name="imu_odom_broadcaster" type="imu_odom_broadcaster.py" /> -->
 
   <!-- launching IMU with orientation -->
   <include file="$(find adafruit_imu)/launch/imu_node.launch" />

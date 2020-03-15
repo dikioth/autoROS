@@ -63,8 +63,8 @@ class Estimator:
 
             self.main()
         else:
-            self.kalman.kalman_predic()
-            self.kalman.kalman_update(self.odom, self.imu)
+            self.kalman.kalman_predic(self.imu)
+            self.kalman.kalman_update(self.odom)
 
             self.kalman.get_estimation()
         self.rate.sleep()

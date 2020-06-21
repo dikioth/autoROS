@@ -1,10 +1,14 @@
 <aside class="notice">
-Ongoing project. ETA: 16 March.
+Finished. Currently extended by another team in a thesis project.
 </aside>
 
 # autoROS
 
 UU project for autonomous robot using EKF for positioning and PID for controlling. The car can be controlled trought a web App built on React.
+
+![](fig_main.PNG)
+
+
 
 # Components are:
 
